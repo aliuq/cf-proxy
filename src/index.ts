@@ -54,15 +54,16 @@ export default {
 			if (url.port !== '80' && url.port !== '443') {
 				url.port = url.protocol === 'https:' ? '443' : '80'
 			}
-			const newRequestInit = new Request(url.toString(), new Request(request, {
-				headers: {
-					reason: 'mirror of China',
-				},
+			const headers = new Headers(request.headers)
+			headers.set('reason', 'mirror of China')
+			const newRequestInit = {
 				redirect: 'manual',
-			}));
-			return proxy(url, newRequestInit)
+				headers,
+			}
+			const newRequest = new Request(url.toString(), new Request(request, newRequestInit));
+			return proxy(url, newRequest)
 		}
-		return new Response('', { status: 404 })
+		return new Response(`Unsupported host ${url.host}`, { status: 200 })
 	}
 };
 
