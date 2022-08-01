@@ -31,13 +31,13 @@ https://assets.llll.host/images/modules/site/social-cards/package-registry.png
 
 | Proxy | Hostname |
 |:---------|:---------|
-| hub.my.domain | github.com |
-| raw.my.domain | raw.githubusercontent.com |
-| assets.my.domain | github.githubassets.com |
-| download.my.domain | codeload.github.com |
-| object.my.domain | objects.githubusercontent.com |
-| media.my.domain | media.githubusercontent.com |
-| gist.my.domain | gist.github.com |
+| hub.llll.host | github.com |
+| raw.llll.host | raw.githubusercontent.com |
+| assets.llll.host | github.githubassets.com |
+| download.llll.host | codeload.github.com |
+| object.llll.host | objects.githubusercontent.com |
+| media.llll.host | media.githubusercontent.com |
+| gist.llll.host | gist.github.com |
 
 ## 部署
 
