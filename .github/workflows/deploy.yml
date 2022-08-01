@@ -1,9 +1,6 @@
 name: Deploy to Cloudflare Workers
 
 on:
-  push:
-    branches:
-      - master
   repository_dispatch:
 
 jobs:
