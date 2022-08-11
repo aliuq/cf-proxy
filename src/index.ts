@@ -47,33 +47,88 @@ export default {
 			[`gist.${env.DOMAIN}`]: 'gist.github.com',
 		}
 		reverseDomainMaps = Object.fromEntries(Object.entries(domainMaps).map(arr => arr.reverse()))
-		
 		const url = new URL(request.url)
 		if (url.host in domainMaps) {
 			url.host = domainMaps[url.host]
 			if (url.port !== '80' && url.port !== '443') {
 				url.port = url.protocol === 'https:' ? '443' : '80'
 			}
-			const headers = new Headers(request.headers)
-			headers.set('reason', 'mirror of China')
-			const newRequestInit = {
-				redirect: 'manual',
-				headers,
+			const newRequest = getNewRequest(url, request)
+			return proxyGithub(url, newRequest)
+		}
+		else if (url.host === `dl.${env.DOMAIN}`) {
+			if (
+				request.method !== 'GET' ||
+				url.pathname === '/favicon.ico' ||
+				url.pathname === '/favicon.png' ||
+				url.pathname === '/sw.js'
+			) {
+				return new Response('', { status: 200 })
 			}
-			const newRequest = new Request(url.toString(), new Request(request, newRequestInit));
-			return proxy(url, newRequest)
+			if (url.pathname === '/') {
+				return new Response(`
+					<div style="position: fixed; left: 0; top: 0; right: 0; bottom: 0; background-color: #181818; color: #ccc;">
+						<div style="position: fixed; left: 50%; top: 150px; transform: translate3D(-50%, 0, 0)">
+							<h2 style="color: #ccc; font-size: 32px; margin-bottom: 0; line-height: 1.6">文件代理加速 by Cloudflare Workers</h2>
+							<p style="padding-bottom: 15px; margin-top: 0; font-size: 14px; color: #999;">
+								每日有使用次数限制，建议通过 cloudflare workers 部署自己的代理加速服务, 部署教程请参考
+								<a style="color: #999;" target="_blank" href="https://github.com/aliuq/proxy-github">readme</a>
+							</p>
+							<form
+								action="https://dl.${env.DOMAIN}"
+								method="get" target="_blank"
+								style="display: flex; align-items: center;"
+								onsubmit="window.open('https://dl.${env.DOMAIN}/' + this.elements.url.value, '_blank'); return false;"
+							>
+								<input
+									type="url"
+									name="url"
+									style="height: 48px; width: 600px; border: 1px solid #999; outline: none; padding: 0 10px; background-color: #181818; color: #ccc;"
+									placeholder="Input URL to download"
+								>
+								<button
+									type="submit"
+									style="height: 48px; width: 80px; border: 1px solid #999; background: #fff; outline: none; cursor: pointer; font-size: 20px; background-color: #181818; color: #ccc;"
+								>Go</button>
+							</form>
+							<p style="font-size: 14px; color: #999">
+								Usage:
+								https://dl.${env.DOMAIN}/<strong>&lt;file_path&gt;</strong>
+							</p>
+						</div>
+						<div style="position: absolute; bottom: 20px; left: 0; right: 0; text-align: center; color: #999; font-size: 14px;">
+							<p>Copyright @ aliuq. All Rights Reserved.</p>
+						</div>
+					</div>
+				`, { status: 200, headers: { 'content-type': 'text/html;charset=utf-8' } })
+			}
+			const sourceUrl = url.pathname.substring(1).replace(/^(https?:)\/+/g, '$1//')
+			try {
+				const newSourceUrl = new URL(sourceUrl)
+				const newRequest = getNewRequest(newSourceUrl, request)
+				return proxy(newSourceUrl, newRequest)
+			} catch (e) {
+				return new Response(`${sourceUrl} is invalid url`, { status: 400 })
+			}
 		}
 		return new Response(`Unsupported host ${url.host}`, { status: 200 })
 	}
 };
 
-async function proxy(url: URL, request: Request) {
+function getNewRequest(url: URL, request: Request) {
+	const headers = new Headers(request.headers)
+	headers.set('reason', 'mirror of China')
+	const newRequestInit = { redirect: 'manual', headers, }
+	return new Request(url.toString(), new Request(request, newRequestInit))
+}
+
+async function proxyGithub(url: URL, request: Request) {
 	try {
 		const res = await fetch(url.toString(), request)
 		const headers = res.headers
 		const newHeaders = new Headers(headers)
 		const status = res.status
-	
+
 		if (newHeaders.has('location')) {
 			let loc = newHeaders.get('location')
 			if (loc) {
@@ -88,14 +143,14 @@ async function proxy(url: URL, request: Request) {
 				}
 			}
 		}
-	
+
 		newHeaders.set('access-control-expose-headers', '*')
 		newHeaders.set('access-control-allow-origin', '*')
-	
+
 		newHeaders.delete('content-security-policy')
 		newHeaders.delete('content-security-policy-report-only')
 		newHeaders.delete('clear-site-data')
-	
+
 		if (res.headers.get('content-type')?.indexOf('text/html') !== -1) {
 			const body = await res.text()
 			const regAll = new RegExp(Object.keys(reverseDomainMaps).map((r: string) => `(https?://${r})`).join('|'), 'g')
@@ -114,7 +169,24 @@ async function proxy(url: URL, request: Request) {
 				headers: newHeaders,
 			})
 		}
-	
+
+		return new Response(res.body, {
+			status,
+			headers: newHeaders
+		})
+	} catch (e: any) {
+		console.error(e)
+		return new Response(e.message, { status: 500 })
+	}
+}
+
+async function proxy(url: URL, request: Request) {
+	try {
+		const res = await fetch(url.toString(), request)
+		const headers = res.headers
+		const newHeaders = new Headers(headers)
+		const status = res.status
+		newHeaders.set('access-control-allow-origin', '*')
 		return new Response(res.body, {
 			status,
 			headers: newHeaders
