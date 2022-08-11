@@ -1,6 +1,6 @@
-# proxy-github
+# cf-proxy
 
-通过 Cloudflare Workers 代理 GitHub 的请求来实现 Github 无法访问的问题
+通过 Cloudflare Workers 代理 GitHub 的请求来实现 Github 无法访问的问题，支持文件代理加速下载
 
 cloudflare 免费版每天有 10 万次免费请求，并且有每分钟1000次请求的限制，如果不够用，可升级到 $5 的高级版本，每月可用 1000 万次请求（超出部分 $0.5/百万次请求）
 
@@ -27,6 +27,12 @@ https://raw.llll.host/aliuq/proxy-github/master/README.md
 https://github.githubassets.com/images/modules/site/social-cards/package-registry.png
 # 替换如下
 https://assets.llll.host/images/modules/site/social-cards/package-registry.png
+
+# 文件代理加速
+# https://dl.llll.host/<file_path>
+https://raw.githubusercontent.com/aliuq/proxy-github/master/README.md
+# 替换如下
+https://dl.llll.host/https://raw.githubusercontent.com/aliuq/proxy-github/master/README.md
 ```
 
 详细代理列表如下：
