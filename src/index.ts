@@ -102,7 +102,7 @@ export default {
 					</div>
 				`, { status: 200, headers: { 'content-type': 'text/html;charset=utf-8' } })
 			}
-			const sourceUrl = url.href.replace(url.origin, '').substring(1)
+			const sourceUrl = url.href.replace(url.origin, '').substring(1).replace(/^(https?:)\/+/g, '$1//')
 			try {
 				const newSourceUrl = new URL(sourceUrl)
 				const newRequest = getNewRequest(newSourceUrl, request)
