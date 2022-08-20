@@ -2,7 +2,7 @@
 
 通过 Cloudflare Workers 代理 GitHub 的请求来实现 Github 无法访问的问题，支持文件代理加速下载
 
-> **Note**
+> **Note**  
 > 无法保证 hub.llll.host 持续可用，建议自行部署
 
 cloudflare 免费版每天有 10 万次免费请求，并且有每分钟1000次请求的限制，如果不够用，可升级到 $5 的高级版本，每月可用 1000 万次请求（超出部分 $0.5/百万次请求）
@@ -52,7 +52,7 @@ https://dl.llll.host/https://raw.githubusercontent.com/aliuq/proxy-github/master
 
 ## 部署
 
-> **Warning**
+> **Warning**  
 > 由于只有一个 Cloudflare 账号，所以没有使用多余账号进行测试
 
 [![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/aliuq/proxy-github)
@@ -78,7 +78,7 @@ npm install wrangler -g
 
 ## Github 私有仓库
 
-> ℹ️ 重要提示
+> ℹ️ 重要提示  
 > cf-proxy 不会保存任何数据，仅作代理转发，但由于使用次数限制，建议进行私有化部署
 
 私有仓库操作与公开仓库使用方式一致，仅多了一步登录授权，需输入用户名和 Github Token
