@@ -102,7 +102,7 @@ export default {
 					</div>
 				`, { status: 200, headers: { 'content-type': 'text/html;charset=utf-8' } })
 			}
-			const sourceUrl = url.pathname.substring(1).replace(/^(https?:)\/+/g, '$1//')
+			const sourceUrl = url.href.replace(url.origin, '').substring(1)
 			try {
 				const newSourceUrl = new URL(sourceUrl)
 				const newRequest = getNewRequest(newSourceUrl, request)
@@ -118,7 +118,7 @@ export default {
 function getNewRequest(url: URL, request: Request) {
 	const headers = new Headers(request.headers)
 	headers.set('reason', 'mirror of China')
-	const newRequestInit = { redirect: 'manual', headers, }
+	const newRequestInit = { redirect: 'manual', headers }
 	return new Request(url.toString(), new Request(request, newRequestInit))
 }
 
@@ -164,16 +164,9 @@ async function proxyGithub(url: URL, request: Request) {
 				// Avoid integrity error
 				.replace(/integrity=\".*?\"/g, '')
 
-			return new Response(newBody, {
-				status,
-				headers: newHeaders,
-			})
+			return new Response(newBody, { status, headers: newHeaders, })
 		}
-
-		return new Response(res.body, {
-			status,
-			headers: newHeaders
-		})
+		return new Response(res.body, { status, headers: newHeaders })
 	} catch (e: any) {
 		console.error(e)
 		return new Response(e.message, { status: 500 })
@@ -186,11 +179,13 @@ async function proxy(url: URL, request: Request) {
 		const headers = res.headers
 		const newHeaders = new Headers(headers)
 		const status = res.status
+		newHeaders.set('access-control-expose-headers', '*')
 		newHeaders.set('access-control-allow-origin', '*')
-		return new Response(res.body, {
-			status,
-			headers: newHeaders
-		})
+		// Remove CSP
+		newHeaders.delete('content-security-policy')
+		newHeaders.delete('content-security-policy-report-only')
+		newHeaders.delete('clear-site-data')
+		return new Response(res.body, { status, headers: newHeaders })
 	} catch (e: any) {
 		console.error(e)
 		return new Response(e.message, { status: 500 })
