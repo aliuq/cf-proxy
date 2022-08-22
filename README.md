@@ -76,6 +76,8 @@ npm install wrangler -g
 
 ![s1](https://img2.bilishare.com/img/2022/08/01/223559c7ae0.png/normal)
 
++ [手把手实现 Github 代理加速](https://www.bilishare.com/tech/2022/08/23/cf-proxy-github.html)
+
 ## Github 私有仓库
 
 > ℹ️ 重要提示  
