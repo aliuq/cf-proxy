@@ -3,39 +3,27 @@
 通过 Cloudflare Workers 代理 GitHub 的请求来实现 Github 无法访问的问题，支持文件代理加速下载
 
 > **Note**  
-> 无法保证 hub.llll.host 持续可用，建议自行部署
-
-cloudflare 免费版每天有 10 万次免费请求，并且有每分钟1000次请求的限制，如果不够用，可升级到 $5 的高级版本，每月可用 1000 万次请求（超出部分 $0.5/百万次请求）
-
-如果发现 [hub.llll.host](https://hub.llll.host) 不能访问或访问过慢，请进行私有化部署，如果只是几个人使用，完全足够
-
-请尽量减少对仓库页面的访问，以减少 assets.llll.host 的负担，一个页面随随便便就有50+请求，省着点用🤣，建议通过以下方式对单个文件进行访问或者clone
-
-请尽量避免使用代理进入 GitHub 的时候进行登录
+> 无法保证 `hub.llll.host` 持续可用，建议自行部署
 
 ## 使用方法
 
-```bash
+```diff
 # clone a repo
-git clone https://github.com/aliuq/proxy-github.git
-# 替换如下
-git clone https://hub.llll.host/aliuq/proxy-github.git
+- git clone https://github.com/aliuq/proxy-github.git
++ git clone https://hub.llll.host/aliuq/proxy-github.git
 
 # raw.githubusercontent.com
-https://raw.githubusercontent.com/aliuq/proxy-github/master/README.md
-# 替换如下
-https://raw.llll.host/aliuq/proxy-github/master/README.md
+- https://raw.githubusercontent.com/aliuq/proxy-github/master/README.md
++ https://raw.llll.host/aliuq/proxy-github/master/README.md
 
 # github.githubassets.com
-https://github.githubassets.com/images/modules/site/social-cards/package-registry.png
-# 替换如下
-https://assets.llll.host/images/modules/site/social-cards/package-registry.png
+- https://github.githubassets.com/images/modules/site/social-cards/package-registry.png
++ https://assets.llll.host/images/modules/site/social-cards/package-registry.png
 
 # 文件代理加速
 # https://dl.llll.host/<file_path>
-https://raw.githubusercontent.com/aliuq/proxy-github/master/README.md
-# 替换如下
-https://dl.llll.host/https://raw.githubusercontent.com/aliuq/proxy-github/master/README.md
+- https://raw.githubusercontent.com/aliuq/proxy-github/master/README.md
++ https://dl.llll.host/https://raw.githubusercontent.com/aliuq/proxy-github/master/README.md
 ```
 
 详细代理列表如下：
@@ -49,6 +37,17 @@ https://dl.llll.host/https://raw.githubusercontent.com/aliuq/proxy-github/master
 | object.llll.host | objects.githubusercontent.com |
 | media.llll.host | media.githubusercontent.com |
 | gist.llll.host | gist.github.com |
+| dl.llll.host | dl.llll.host/\<File Path\> |
+
+## 一些话
+
+cloudflare 免费版每天有 $\textcolor{yellow}{\text{10万次}}$ 免费请求，每分钟1000次请求的限制，如果不够用，可升级到\$5的高级版本，每月可用1000万次请求（超出部分$0.5/百万次请求）
+
+如果发现 [hub.llll.host](https://hub.llll.host) 不能访问或访问过慢，请进行私有化部署，如果只是几个人使用，完全足够
+
+请尽量减少对仓库页面的访问，以减少 `assets.llll.host` 的负担，一个页面随随便便就有50+请求，尽量减少不必要的次数浪费，建议通过以下方式对单个文件进行访问或者clone
+
+请尽量避免使用代理进入 GitHub 的时候进行登录
 
 ## 部署
 
@@ -138,9 +137,11 @@ git clone https://github.com/aliuq/cf-proxy.git
 cd cf-proxy
 # 安装依赖，依赖仅做类型提示
 npm install
-# 开发 等同于 wrangler dev
+# 开发 等同于 `wrangler dev -l --ip localhost`
 npm run dev
-# 发布 等同于 wrangler publish
+# 然后按下 `b` 打开浏览器，访问 https://localhost:8787
+
+# 发布 等同于 `wrangler publish`
 npm run deploy
 ```
 
