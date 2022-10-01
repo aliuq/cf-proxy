@@ -8,7 +8,7 @@
   },
   "private": true,
   "scripts": {
-    "dev": "wrangler dev",
+    "dev": "wrangler dev -l --ip localhost",
     "deploy": "wrangler publish"
   }
 }
