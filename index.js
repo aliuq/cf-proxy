@@ -1,12 +1,13 @@
-"use strict";
-
 // src/index.ts
 var domainMaps = {};
 var reverseDomainMaps = {};
 var src_default = {
   async fetch(request, env, ctx) {
     if (!env.DOMAIN) {
-      return new Response("DOMAIN is not defined, Please sepecify DOMAIN in your worker config", { status: 500 });
+      return new Response(
+        "DOMAIN is not defined, Please sepecify DOMAIN in your worker config",
+        { status: 500 }
+      );
     }
     domainMaps = {
       [`hub.${env.DOMAIN}`]: "github.com",
@@ -19,6 +20,12 @@ var src_default = {
     };
     reverseDomainMaps = Object.fromEntries(Object.entries(domainMaps).map((arr) => arr.reverse()));
     const url = new URL(request.url);
+    if (url.pathname === "/robots.txt") {
+      return new Response("User-agent: *\nDisallow: /", { status: 200 });
+    }
+    if (request.method !== "GET" || url.pathname === "/favicon.ico" || url.pathname === "/favicon.png" || url.pathname === "/sw.js") {
+      return new Response("", { status: 200 });
+    }
     if (url.host in domainMaps) {
       url.host = domainMaps[url.host];
       if (url.port !== "80" && url.port !== "443") {
@@ -27,9 +34,6 @@ var src_default = {
       const newRequest = getNewRequest(url, request);
       return proxyGithub(url, newRequest);
     } else if (url.host === `dl.${env.DOMAIN}`) {
-      if (request.method !== "GET" || url.pathname === "/favicon.ico" || url.pathname === "/favicon.png" || url.pathname === "/sw.js") {
-        return new Response("", { status: 200 });
-      }
       if (url.pathname === "/") {
         return new Response(`
 					<div style="position: fixed; left: 0; top: 0; right: 0; bottom: 0; background-color: #181818; color: #ccc;">
