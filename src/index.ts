@@ -54,7 +54,6 @@ export default {
 		}
 		// Blocking useless requests
 		if (
-			request.method !== 'GET' ||
 			url.pathname === '/favicon.ico' ||
 			url.pathname === '/favicon.png' ||
 			url.pathname === '/sw.js'
