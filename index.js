@@ -23,7 +23,7 @@ var src_default = {
     if (url.pathname === "/robots.txt") {
       return new Response("User-agent: *\nDisallow: /", { status: 200 });
     }
-    if (request.method !== "GET" || url.pathname === "/favicon.ico" || url.pathname === "/favicon.png" || url.pathname === "/sw.js") {
+    if (url.pathname === "/favicon.ico" || url.pathname === "/favicon.png" || url.pathname === "/sw.js") {
       return new Response("", { status: 200 });
     }
     if (url.host in domainMaps) {
