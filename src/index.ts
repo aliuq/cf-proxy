@@ -9,13 +9,14 @@
  */
 
 // import fetchAdapter from '@vespaiach/axios-fetch-adapter'
-import { routeChat, routeChatApi } from './openai/index'
+import { routeChat, routeChatApi, routeFChat } from './openai/index'
 
 // console.log(fetchAdapter);
 
 export interface Env {
   DOMAIN: string
   OPENAI_API_KEY: string
+  OPENAI_COOKIE: string
 }
 
 /**
@@ -61,6 +62,13 @@ export default {
     // Blocking useless requests
     if (url.pathname === '/favicon.ico' || url.pathname === '/favicon.png' || url.pathname === '/sw.js')
       return new Response('', { status: 200 })
+
+    // TODO: 暂时没找到可替换的地方
+    if (url.pathname === '/api/auth/session') {
+      const newUrl = new URL(request.url)
+      newUrl.pathname = '/fchat/session'
+      return routeFChat(newUrl, request, env)
+    }
 
     if (url.host in domainMaps) {
       url.host = domainMaps[url.host]
@@ -124,6 +132,10 @@ export default {
     else if (url.pathname === '/chat') {
       return await routeChat()
     }
+    else if (url.pathname === '/fchat' || url.pathname.startsWith('/fchat/')) {
+      // 转发官网的聊天请求
+      return routeFChat(url, request, env)
+    }
     return new Response(`Unsupported host ${url.host}`, { status: 200 })
   },
 }
@@ -131,7 +143,7 @@ export default {
 function getNewRequest(url: URL, request: Request) {
   const headers = new Headers(request.headers)
   headers.set('reason', 'mirror of China')
-  const newRequestInit = { redirect: 'manual', headers }
+  const newRequestInit: RequestInit = { redirect: 'manual', headers }
   return new Request(url.toString(), new Request(request, newRequestInit))
 }
 
