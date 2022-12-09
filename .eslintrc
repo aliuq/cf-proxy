@@ -1,0 +1,6 @@
+{
+  "extends": "@aliuq",
+  "globals": {
+    "Prism": true
+  }
+}
