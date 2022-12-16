@@ -5,15 +5,6 @@ import * as execa from 'execa'
 import getPort, { portNumbers } from 'get-port'
 import type { BuildEntry } from 'unbuild'
 
-interface INTERNAL_ENV {
-  DOMAIN?: string
-}
-
-interface Options {
-  unbuild?: boolean
-  env: INTERNAL_ENV
-}
-
 async function wranglerConfig({ unbuild: useUnbuild, env: _env }: Options = { unbuild: false, env: {} }) {
   const port = await getPort({ port: portNumbers(8787, 8887) })
 

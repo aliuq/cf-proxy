@@ -1,4 +1,4 @@
-# Workers: {{ name }}
+# Worker: {{ name }}
 
 ## 文件结构
 

@@ -187,6 +187,8 @@ else if (answers.command === 'publish') {
     const outDir = path.resolve(workerRoot, wranglerConfigParsed.outDir)
     tomlName = `${answers.worker}.wrangler.toml`
     wranglerTomlPath = path.resolve(outDir, tomlName)
+    // Set `wrangler.toml` path
+    answers.flags.config = wranglerTomlPath
     delete wranglerConfigParsed.outDir
   }
   console.debug(`Parsing the \`${tomlName}\` path:`, cyan(wranglerTomlPath))
