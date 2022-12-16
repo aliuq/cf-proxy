@@ -5,21 +5,7 @@ export default {
       return new Response('', { status: 204 })
 
     const url = new URL(request.url)
-
-    const hostArr = url.host.split('.')
-    let subdomain = ''
-    let domain = ''
-    if (hostArr.length > 2) {
-      subdomain = hostArr[0]
-      domain = hostArr.slice(1).join('.')
-    }
-    else if (hostArr.length === 2) {
-      subdomain = hostArr[1].match(/^localhost(:\d+)?$/) ? hostArr[0] : ''
-      domain = hostArr[1].match(/^localhost(:\d+)?$/) ? hostArr[1] : hostArr.join('.')
-    }
-    else {
-      domain = hostArr.join('.')
-    }
+    const { domain, subdomain } = getDomainAndSubdomain(request)
 
     if (url.pathname === '/robots.txt')
       return new Response('User-agent: *\nDisallow: /', { status: 200 })
@@ -33,6 +19,27 @@ export default {
       headers: { 'content-type': 'text/plain;charset=utf-8', 'git-hash': env.GIT_HASH },
     })
   },
+}
+
+/** Get domain and subdomain from request url
+ */
+function getDomainAndSubdomain(request: Request): { domain: string; subdomain: string } {
+  const url = new URL(request.url)
+  const hostArr = url.host.split('.')
+  let subdomain = ''
+  let domain = ''
+  if (hostArr.length > 2) {
+    subdomain = hostArr[0]
+    domain = hostArr.slice(1).join('.')
+  }
+  else if (hostArr.length === 2) {
+    subdomain = hostArr[1].match(/^localhost(:\d+)?$/) ? hostArr[0] : ''
+    domain = hostArr[1].match(/^localhost(:\d+)?$/) ? hostArr[1] : hostArr.join('.')
+  }
+  else {
+    domain = hostArr.join('.')
+  }
+  return { domain, subdomain }
 }
 
 /**
