@@ -168,4 +168,4 @@ dist
 
 # wrangler project
 
-.history/
+.history/**

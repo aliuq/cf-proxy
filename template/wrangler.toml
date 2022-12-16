@@ -1,0 +1,16 @@
+name = "{{ name }}"
+main = "src/index.ts"
+compatibility_date = "{{ date }}"
+
+# Set your routes here
+# routes = [
+#   { pattern = "demo.example.com", zone_name = "example.com", custom_domain = true },
+# ]
+
+[vars]
+# DOMAIN = "" # domain name of the site
+
+[dev]
+port = 8787
+ip = "localhost"
+# local_protocol = "https"
