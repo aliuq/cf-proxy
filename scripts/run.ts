@@ -111,16 +111,23 @@ ${magenta('.env:')}               ${cyan(envPath)}
 // Read configurations
 const envConfig = fs.existsSync(envPath) ? dotenv.parse(fs.readFileSync(envPath, 'utf-8')) : {}
 const { wranglerConfig } = await import(wranglerConfigPath)
-// const pkg = await import(packagePath)
 
 //
 // === Run command
-
 console.info(cyan(`Running ${green(answers.command)} in worker ${green(answers.worker)}...`))
-
 if (answers.command === 'dev') {
-// Parsing the worker configuration
-  const wranglerConfigParsed = await wranglerConfig()
+  // Get the environment variables
+  const envVars = Object.keys(envConfig).length > 0 ? await parseEnvConfig(envConfig, workerRoot) : {}
+  const envVarsInternal: Record<string, string> = {}
+  Object.keys(envVars).forEach((key: string) => {
+    if (key.startsWith('__') && key.endsWith('__')) {
+      envVarsInternal[key.replace(/__(.*?)__/, '$1')] = envVars[key]
+      delete envVars[key]
+    }
+  })
+
+  // Parsing the worker configuration
+  const wranglerConfigParsed = await wranglerConfig({ env: envVarsInternal })
   console.debug('Read the parsed `wrangler.config.ts` configuration:', gray(JSON.stringify({ 'wrangler.toml': wranglerConfigParsed })))
 
   // Select environment
@@ -135,8 +142,7 @@ if (answers.command === 'dev') {
   console.debug('Write to `wrangler.toml` file successfully:', cyan(wranglerTomlPath))
 
   // Store `key:value` from `.env` into `.dev.vars`, overwriting the original content
-  if (Object.keys(envConfig).length > 0) {
-    const envVars = await parseEnvConfig(envConfig, workerRoot)
+  if (Object.keys(envVars).length > 0) {
     const envVarsStr = Object.keys(envVars).map((key: string) => `${key}=${envVars[key]}`)
     await fse.outputFile(devVarsPath, envVarsStr.join(os.EOL))
     console.info('Write to `.dev.vars` file successfully:', cyan(devVarsPath))
@@ -156,8 +162,18 @@ else if (answers.command === 'publish') {
     await execa.execaCommand('unbuild', { cwd: workerRoot, stdio: 'inherit' })
   }
 
+  // Get the environment variables
+  const envVars = Object.keys(envConfig).length > 0 ? await parseEnvConfig(envConfig, workerRoot) : {}
+  const envVarsInternal: Record<string, string> = {}
+  Object.keys(envVars).forEach((key: string) => {
+    if (key.startsWith('__') && key.endsWith('__')) {
+      envVarsInternal[key.replace(/__(.*?)__/, '$1')] = envVars[key]
+      delete envVars[key]
+    }
+  })
+
   // Parsing the worker configuration
-  const wranglerConfigParsed = await wranglerConfig({ unbuild: answers.unbuild })
+  const wranglerConfigParsed = await wranglerConfig({ unbuild: answers.unbuild, env: envVarsInternal })
   console.debug('Read the parsed `wrangler.config.ts` configuration:', gray(JSON.stringify({ 'wrangler.toml': wranglerConfigParsed })))
 
   // Select environment
@@ -183,8 +199,7 @@ else if (answers.command === 'publish') {
   await runCommand(answers, workerRoot)
 
   // Secrets
-  if (Object.keys(envConfig).length > 0) {
-    const envVars = await parseEnvConfig(envConfig, workerRoot)
+  if (Object.keys(envVars).length > 0) {
     const tmpEnvPath = path.resolve(workerRoot, '.tmp.env.json')
     await fse.outputJson(tmpEnvPath, envVars)
     console.debug('Write to `.tmp.env.json` file successfully:', cyan(tmpEnvPath))
@@ -209,7 +224,14 @@ else if (answers.command === 'secret:bulk') {
   // Confirm secrets
   await checkConfirm()
 
-  if (!Object.keys(envConfig).length) {
+  // Get the environment variables
+  const envVars = Object.keys(envConfig).length > 0 ? await parseEnvConfig(envConfig, workerRoot) : {}
+  Object.keys(envVars).forEach((key: string) => {
+    if (key.startsWith('__') && key.endsWith('__'))
+      delete envVars[key]
+  })
+
+  if (!Object.keys(envVars).length) {
     console.error(red(`No secrets found in \`${envPath}\` file`))
     process.exit(0)
   }
@@ -219,8 +241,6 @@ else if (answers.command === 'secret:bulk') {
   console.debug('Read the parsed `wrangler.config.ts` configuration:', gray(JSON.stringify({ 'wrangler.toml': wranglerConfigParsed })))
   // Select environment
   await selectEnv(wranglerConfigParsed, answers)
-
-  const envVars = await parseEnvConfig(envConfig, workerRoot)
 
   const tmpEnvPath = path.resolve(workerRoot, '.tmp.env.json')
   await fse.outputJson(tmpEnvPath, envVars)

@@ -5,12 +5,16 @@ import * as execa from 'execa'
 import getPort, { portNumbers } from 'get-port'
 import type { BuildEntry } from 'unbuild'
 
-interface Options {
-  unbuild?: boolean
+interface INTERNAL_ENV {
+  DOMAIN?: string
 }
 
-async function wranglerConfig(options: Options = { unbuild: false }) {
-  const useUnbuild = options.unbuild
+interface Options {
+  unbuild?: boolean
+  env: INTERNAL_ENV
+}
+
+async function wranglerConfig({ unbuild: useUnbuild, env: _env }: Options = { unbuild: false, env: {} }) {
   const port = await getPort({ port: portNumbers(8787, 8887) })
 
   const { default: buildConfig } = await import('./build.config')
@@ -31,7 +35,7 @@ async function wranglerConfig(options: Options = { unbuild: false }) {
   const gitHash = execa.execaCommandSync('git rev-parse --short HEAD').stdout
 
   return {
-    name: 'test-worker',
+    name: '{{ name }}',
     main: useUnbuild ? `${outName}.mjs` : `${nameFull}.ts`,
     compatibility_date: new Date().toISOString().split('T')[0],
     no_bundle: useUnbuild ? true : undefined,
@@ -54,9 +58,11 @@ async function wranglerConfig(options: Options = { unbuild: false }) {
           mode: 'production',
           GIT_HASH: gitHash,
         },
-        // routes: [
-        //   { pattern: 'demo.example.com', zone_name: 'example.com', custom_domain: true },
-        // ],
+        // routes: env.DOMAIN
+        //   ? [
+        //     { pattern: `demo.${env.DOMAIN}`, zone_name: env.DOMAIN, custom_domain: true },
+        //   ]
+        //   : undefined,
       },
     },
     outDir: useUnbuild ? outDir : undefined,
