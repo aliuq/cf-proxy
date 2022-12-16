@@ -1,0 +1,8 @@
+name = "ip"
+main = "src/index.ts"
+compatibility_date = "2022-12-16"
+
+[dev]
+port = 8787
+ip = "localhost"
+# local_protocol = "https"
