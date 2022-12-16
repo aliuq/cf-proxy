@@ -169,3 +169,4 @@ dist
 # wrangler project
 
 .history/**
+!template/.env
