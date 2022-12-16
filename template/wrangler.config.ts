@@ -35,14 +35,19 @@ async function wranglerConfig({ unbuild: useUnbuild, env: _env }: Options = { un
     },
     dev: {
       ip: 'localhost',
+      // local_protocol: 'https',
       port,
     },
     env: {
-      // staging: {
+      // // For local development, Do not pulish the enviroment to cloudflare.
+      // localhost: {
       //   vars: {
-      //     mode: 'staging',
+      //     mode: 'localhost',
       //     GIT_HASH: gitHash,
       //   },
+      //   routes: [
+      //     { pattern: `foo.localhost:${port}`, zone_name: `localhost:${port}`, custom_domain: true },
+      //   ],
       // },
       production: {
         vars: {
