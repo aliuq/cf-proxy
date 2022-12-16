@@ -171,3 +171,4 @@ out
 !template/.env
 **/dist/*.wrangler.toml
 workers/**/wrangler.toml
+.dev.vars
