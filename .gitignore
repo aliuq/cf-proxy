@@ -113,7 +113,6 @@ out
 # Nuxt.js build / generate output
 
 .nuxt
-dist
 
 # Gatsby files
 
@@ -170,3 +169,4 @@ dist
 
 .history/**
 !template/.env
+**/dist/*.wrangler.toml
