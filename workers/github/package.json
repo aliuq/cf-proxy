@@ -1,7 +1,7 @@
 {
   "name": "cf-workers-github",
   "type": "module",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "github is a cloudflare worker",
   "author": "AliuQ <aliuq@bilishare.com>",
   "license": "MIT",
