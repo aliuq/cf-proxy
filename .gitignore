@@ -170,3 +170,4 @@ out
 .history/**
 !template/.env
 **/dist/*.wrangler.toml
+workers/**/wrangler.toml
