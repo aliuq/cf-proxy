@@ -162,6 +162,11 @@ else if (answers.command === 'publish') {
     await execa.execaCommand('unbuild', { cwd: workerRoot, stdio: 'inherit' })
   }
 
+  // Bumpp package.json version
+  const bumppCommandArr = ['npx', 'bumpp', 'package.json', '--no-tag', '--commit', `chore(${answers.worker}):\\ release\\ v`]
+  console.debug(`${gray('Execution command(bumpp):')} ${green(bumppCommandArr.join(' '))}\n`)
+  await execa.execaCommand(bumppCommandArr.join(' '), { cwd: workerRoot, stdio: 'inherit' })
+
   // Get the environment variables
   const envVars = Object.keys(envConfig).length > 0 ? await parseEnvConfig(envConfig, workerRoot) : {}
   const envVarsInternal: Record<string, string> = {}
@@ -173,7 +178,7 @@ else if (answers.command === 'publish') {
   })
 
   // Parsing the worker configuration
-  const wranglerConfigParsed = await wranglerConfig({ unbuild: answers.unbuild, env: envVarsInternal })
+  const { outDir: unbuildOutDir, ...wranglerConfigParsed } = await wranglerConfig({ unbuild: answers.unbuild, env: envVarsInternal })
   console.debug('Read the parsed `wrangler.config.ts` configuration:', gray(JSON.stringify({ 'wrangler.toml': wranglerConfigParsed })))
 
   // Select environment
@@ -184,12 +189,11 @@ else if (answers.command === 'publish') {
   let tomlName = 'wrangler.toml'
   if (answers.unbuild) {
   // Set `outDir` path
-    const outDir = path.resolve(workerRoot, wranglerConfigParsed.outDir)
+    const outDir = path.resolve(workerRoot, unbuildOutDir)
     tomlName = `${answers.worker}.wrangler.toml`
     wranglerTomlPath = path.resolve(outDir, tomlName)
     // Set `wrangler.toml` path
     answers.flags.config = wranglerTomlPath
-    delete wranglerConfigParsed.outDir
   }
   console.debug(`Parsing the \`${tomlName}\` path:`, cyan(wranglerTomlPath))
 
@@ -209,6 +213,22 @@ else if (answers.command === 'publish') {
     await runCommand(secretAnswers, workerRoot)
     await fse.unlink(tmpEnvPath)
     console.debug('Delete `.tmp.env.json` file successfully:', cyan(tmpEnvPath))
+  }
+
+  // Publish assets to github
+  if (answers.unbuild) {
+    const outDir = path.resolve(workerRoot, unbuildOutDir)
+    const gitCommandArr = [
+      `git add ${outDir}`,
+      `git commit -m chore(${answers.worker}):\\ publish\\ assets`,
+      'git push',
+    ]
+    console.info(cyan('\nPublish assets...'))
+
+    for await (const command of gitCommandArr) {
+      console.debug(`${gray('Execution command(git):')} ${green(command)}\n`)
+      await execa.execaCommand(command, { cwd: workerRoot, stdio: 'inherit' })
+    }
   }
 }
 else if (answers.command === 'delete') {
