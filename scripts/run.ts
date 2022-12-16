@@ -370,12 +370,13 @@ function parseCliOptions() {
  *
  * Ensure `wrangler.toml` name same as directory name.
  * @param workersRoot Path to workers directory
+ *
+ * @tips `wrangler.toml` can be absent, but `package.json` must have
  */
 function getAllWorkers(workersRoot: string) {
   const workers = fs.readdirSync(workersRoot).filter((name) => {
     const stat = fs.statSync
     return stat(`${workersRoot}/${name}`).isDirectory()
-    && fs.existsSync(`${workersRoot}/${name}/wrangler.toml`)
      && fs.existsSync(`${workersRoot}/${name}/package.json`)
   })
   return workers
