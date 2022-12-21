@@ -172,4 +172,4 @@ out
 **/dist/*.wrangler.toml
 workers/**/wrangler.toml
 .dev.vars
-openai-forward/**
+workers/openai-forward/**
