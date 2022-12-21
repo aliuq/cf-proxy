@@ -1,6 +1,7 @@
 interface ENV {
   GIT_HASH: string
   VERSION: string
+  OPENAI_API_KEY: string
 }
 
 interface INTERNAL_ENV {
