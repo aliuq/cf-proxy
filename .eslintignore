@@ -1,0 +1,5 @@
+example
+node_modules
+.output
+dist
+tailwindcss.css
