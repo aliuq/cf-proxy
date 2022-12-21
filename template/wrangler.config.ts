@@ -4,6 +4,7 @@ import path from 'path'
 import * as execa from 'execa'
 import getPort, { portNumbers } from 'get-port'
 import type { BuildEntry } from 'unbuild'
+import pkg from './package.json'
 
 async function wranglerConfig({ unbuild: useUnbuild, env: _env }: Options = { unbuild: false, env: {} }) {
   const port = await getPort({ port: portNumbers(8787, 8887) })
@@ -23,15 +24,24 @@ async function wranglerConfig({ unbuild: useUnbuild, env: _env }: Options = { un
   const nameFull = typeof entrie === 'string' ? entrie : entrie.input
   const outName = path.basename(nameFull)
 
-  const gitHash = execa.execaCommandSync('git rev-parse --short HEAD').stdout
+  const vars = {
+    GIT_HASH: execa.execaCommandSync('git rev-parse --short HEAD').stdout,
+    VERSION: `v${pkg.version}`,
+  }
 
   return {
     name: '{{ name }}',
     main: useUnbuild ? `${outName}.mjs` : `${nameFull}.ts`,
     compatibility_date: new Date().toISOString().split('T')[0],
-    no_bundle: useUnbuild ? true : undefined,
+    /** If set to `true`, the worker will not be bundled. so the output file
+     *  must be a single file and no import module. if exists, will throw error.
+     *
+     *  such as: `import axios from 'axios'`,
+     */
+    // no_bundle: undefined,
     vars: {
-      GIT_HASH: gitHash,
+      mode: 'default',
+      ...vars,
     },
     dev: {
       ip: 'localhost',
@@ -43,7 +53,7 @@ async function wranglerConfig({ unbuild: useUnbuild, env: _env }: Options = { un
       // localhost: {
       //   vars: {
       //     mode: 'localhost',
-      //     GIT_HASH: gitHash,
+      //     ...vars,
       //   },
       //   routes: [
       //     { pattern: `foo.localhost:${port}`, zone_name: `localhost:${port}`, custom_domain: true },
@@ -52,7 +62,7 @@ async function wranglerConfig({ unbuild: useUnbuild, env: _env }: Options = { un
       production: {
         vars: {
           mode: 'production',
-          GIT_HASH: gitHash,
+          ...vars,
         },
         // routes: env.DOMAIN
         //   ? [
