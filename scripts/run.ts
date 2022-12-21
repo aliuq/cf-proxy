@@ -19,9 +19,9 @@ await checkRequired()
 //
 // === Parse args and options
 //
-const { worker, command, params, workersRoot, unbuild, ...flags } = parseCliOptions()
+const { worker, command, params, workersRoot, push, unbuild, ...flags } = parseCliOptions()
 /** All options */
-const answers = { worker, command, workersRoot, unbuild, params, flags }
+const answers = { worker, command, workersRoot, push, unbuild, params, flags }
 
 // help and version command will not run any worker
 answers.flags.help && printtHelp()
@@ -163,9 +163,11 @@ else if (answers.command === 'publish') {
   }
 
   // Bumpp package.json version
-  const bumppCommandArr = ['npx', 'bumpp', 'package.json', '--no-tag', '--commit', `chore(${answers.worker}):\\ release\\ v`]
-  console.debug(`${gray('Execution command(bumpp):')} ${green(bumppCommandArr.join(' '))}\n`)
-  await execa.execaCommand(bumppCommandArr.join(' '), { cwd: workerRoot, stdio: 'inherit' })
+  if (answers.push) {
+    const bumppCommandArr = ['npx', 'bumpp', 'package.json', '--no-tag', '--commit', `chore(${answers.worker}):\\ release\\ v`]
+    console.debug(`${gray('Execution command(bumpp):')} ${green(bumppCommandArr.join(' '))}\n`)
+    await execa.execaCommand(bumppCommandArr.join(' '), { cwd: workerRoot, stdio: 'inherit' })
+  }
 
   // Get the environment variables
   const envVars = Object.keys(envConfig).length > 0 ? await parseEnvConfig(envConfig, workerRoot) : {}
@@ -216,7 +218,7 @@ else if (answers.command === 'publish') {
   }
 
   // Publish assets to github
-  if (answers.unbuild) {
+  if (answers.unbuild && answers.push) {
     const outDir = path.resolve(workerRoot, unbuildOutDir)
     const gitCommandArr = [
       `git add ${outDir}`,
@@ -359,6 +361,7 @@ function parseCliOptions() {
     params: args.params ?? '',
     workersRoot: args.workersRoot ?? 'workers',
     unbuild: args.unbuild ?? true,
+    push: args.push ?? false,
     /** Options, from `wrangler -h`  */
     ...args,
   } as Required<Args>
@@ -485,4 +488,8 @@ interface Args {
   workersRoot?: string
   /** Use unbuild bundle package, only support publish */
   unbuild?: boolean
+  /** Enable bumpp version and push to github
+   * @default false
+   */
+  push?: boolean
 }
