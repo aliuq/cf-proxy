@@ -13,6 +13,7 @@ export function renderTemplate(templateRoot: string, destRoot: string, answers: 
 
   // read all file names in templateRoot
   const files = fs.readdirSync(templateRoot)
+
   files.forEach((fileName) => {
     const templatePath = path.resolve(templateRoot, fileName)
     const destPath = path.resolve(destRoot, fileName)
