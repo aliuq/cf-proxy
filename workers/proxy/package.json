@@ -1,0 +1,21 @@
+{
+  "name": "cf-workers-proxy",
+  "type": "module",
+  "version": "0.0.1",
+  "description": "proxy is a cloudflare worker",
+  "author": "AliuQ <aliuq@bilishare.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/aliuq/cf-proxy/tree/master/workers/proxy#readme",
+  "bugs": {
+    "url": "https://github.com/aliuq/cf-proxy/issues"
+  },
+  "keywords": [
+    "cloudflare",
+    "worker",
+    "proxy"
+  ],
+  "main": "dist/index.mjs",
+  "scripts": {
+    "dev": "wrangler dev -l"
+  }
+}

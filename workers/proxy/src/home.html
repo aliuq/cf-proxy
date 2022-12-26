@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>cf-proxy</title>
+  </head>
+  <body>
+    <div style="position: fixed; left: 0; top: 0; right: 0; bottom: 0; background-color: #181818; color: #ccc;">
+      <div style="position: fixed; left: 50%; top: 150px; transform: translate3D(-50%, 0, 0)">
+        <h2 style="color: #ccc; font-size: 32px; margin-bottom: 0; line-height: 1.6">文件代理加速 by Cloudflare Workers</h2>
+        <p style="padding-bottom: 15px; margin-top: 0; font-size: 14px; color: #999;">
+          每日有使用次数限制，建议通过 cloudflare workers 部署自己的代理加速服务, 部署教程请参考
+          <a style="color: #999;" target="_blank" href="https://github.com/aliuq/cf-proxy">readme</a>
+        </p>
+        <form
+          action="{{url}}"
+          method="get" target="_blank"
+          style="display: flex; align-items: center;"
+          onsubmit="window.open('{{url}}/' + this.elements.url.value, '_blank'); return false;"
+        >
+          <input
+            type="url"
+            name="url"
+            style="height: 48px; width: 600px; border: 1px solid #999; outline: none; padding: 0 10px; background-color: #181818; color: #ccc;"
+            placeholder="Input URL to download"
+          >
+          <button
+            type="submit"
+            style="height: 48px; width: 80px; border: 1px solid #999; background: #fff; outline: none; cursor: pointer; font-size: 20px; background-color: #181818; color: #ccc;"
+          >Go</button>
+        </form>
+        <p style="font-size: 14px; color: #999">
+          Usage:
+          {{url}}/<strong>&lt;file_path&gt;</strong>
+      </p>
+      </div>
+      <div style="position: absolute; bottom: 20px; left: 0; right: 0; text-align: center; color: #999; font-size: 14px;">
+        <p>Copyright @ aliuq. All Rights Reserved. <span style="color: #555;user-select: none;"> [{{hash}}]</span></p>
+      </div>
+    </div>
+  </body>
+</html>

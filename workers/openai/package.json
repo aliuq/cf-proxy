@@ -1,0 +1,27 @@
+{
+  "name": "cf-workers-openai",
+  "type": "module",
+  "version": "0.0.1",
+  "description": "openai is a cloudflare worker",
+  "author": "AliuQ <aliuq@bilishare.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/aliuq/cf-proxy/tree/master/workers/openai#readme",
+  "bugs": {
+    "url": "https://github.com/aliuq/cf-proxy/issues"
+  },
+  "keywords": [
+    "cloudflare",
+    "worker",
+    "openai"
+  ],
+  "main": "dist/index.mjs",
+  "scripts": {
+    "dev": "wrangler dev -l",
+    "build": "unbuild"
+  },
+  "dependencies": {
+    "@vespaiach/axios-fetch-adapter": "^0.3.1",
+    "axios": "0.26.0",
+    "openai": "^3.1.0"
+  }
+}

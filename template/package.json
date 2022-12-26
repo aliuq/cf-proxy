@@ -1,0 +1,22 @@
+{
+  "name": "cf-workers-{{ name }}",
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Simple cloudflare worker {{ name }}",
+  "author": "AliuQ <aliuq@bilishare.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/aliuq/cf-proxy/tree/master/workers/{{ name }}#readme",
+  "bugs": {
+    "url": "https://github.com/aliuq/cf-proxy/issues"
+  },
+  "keywords": [
+    "cloudflare",
+    "worker",
+    "{{ name }}"
+  ],
+  "main": "dist/index.mjs",
+  "scripts": {
+    "dev": "wrangler dev -l",
+    "build": "unbuild"
+  }
+}

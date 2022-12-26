@@ -6,7 +6,7 @@
   <meta name="next-head-count" content="3" />
   <!-- <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script> -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://dl.llll.host/https://chat.openai.com/_next/static/css/b74e0eed11291124.css">
+  <!-- <link rel="stylesheet" href="/tailwindcss.css"> -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/markdown-it/13.0.1/markdown-it.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <!-- prism -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
@@ -37,10 +37,33 @@
       width: 100%;
     }
 
+    .animate-three-dot::after {
+      content: '.';
+      animation: three-dot 1.5s infinite;
+      bottom: 1em;
+      line-height: 0;
+      left: -0.5em;
+      position: absolute;
+    }
+    @keyframes three-dot {
+      0% {
+        content: '.';
+      }
+      33% {
+        content: '..';
+      }
+      66% {
+        content: '...';
+      }
+    }
+
+    .dark .dark\:bg-vert-dark-gradient {
+      background-image: linear-gradient(rgba(44, 48, 50, 0), rgb(44, 48, 50) 58.85%);
+    }
   </style>
 </head>
 
-<body class="line-numbers" data-prismjs-copy-timeout="500">
+<body class="line-numbers prose" data-prismjs-copy-timeout="500">
   <div id="app" class="bg-gray-800 w-screen h-screen">
     <main class="relative w-full h-full transition-all overflow-hidden flex flex-col">
       <!-- 聊天记录 -->
@@ -96,12 +119,16 @@
             <!-- 输入框 -->
             <div
               class="flex flex-col w-full py-2 pl-3 md:py-3 md:pl-4 relative border border-gray-900/50 text-white bg-gray-700 rounded-md shadow-[0_0_15px_rgba(0,0,0,0.10)]">
-              <textarea tabindex="0" :style="textareaStyle" rows="1" placeholder="" class="w-full resize-none focus:ring-0 focus-visible:ring-0 p-0 pr-7 m-0 border-0 bg-transparent transition-[height]" v-model="keywords" @keypress.enter.prevent="getGPT" @input="handleTyping"></textarea>
-              <button
-                class="absolute p-1 rounded-md text-gray-500 bottom-1.5 right-1 md:bottom-2.5 md:right-2 hover:text-gray-400 hover:bg-gray-900 disabled:hover:bg-transparent" @click.prevent="getGPT">
-                <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 20 20" class="w-4 h-4 rotate-90" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path>
-                </svg>
+              <textarea tabindex="0" :style="textareaStyle" rows="1" placeholder="" class="w-full resize-none outline-0 p-0 pr-7 m-0 border-0 bg-transparent transition-[height]" v-model="keywords" @keydown.enter="getGPT" @input="handleTyping"></textarea>
+              <button class="absolute p-1 rounded-md text-gray-500 bottom-1.5 right-1 md:bottom-2.5 md:right-2 hover:text-gray-400 hover:bg-gray-900 disabled:hover:bg-transparent disabled:bottom-1" :disabled="isLoading" @click.prevent="getGPT">
+                <template v-if="!isLoading">
+                  <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 20 20" class="w-4 h-4 rotate-90" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path>
+                  </svg>
+                </template>
+                <template v-else>
+                  <span class="text-2xl animate-three-dot"></span>
+                </template>
               </button>
             </div>
           </div>
@@ -131,6 +158,7 @@
           keywords: '',
           textareaStyle: {},
           records: [],
+          isLoading: false,
         }
       },
       methods: {
@@ -148,9 +176,13 @@
             overflowY: textarea.scrollHeight > 200 ? undefined : 'hidden',
           }
         }, 50),
-        async getGPT() {
-          if (!this.keywords.trim())
+        async getGPT(event) {
+          if (event.shiftKey)
             return
+          event.preventDefault()
+          if (!this.keywords.trim() || this.isLoading)
+            return
+          this.isLoading = true
           this.records.push({ type: 'ask', text: this.keywords })
           this.records.push({ type: 'answer', text: '', loading: true })
           const text = this.keywords
@@ -159,14 +191,14 @@
           const records = document.querySelector('.records')
           await new Promise(resolve => setTimeout(resolve, 50))
           records.scrollTo({ top: records.scrollHeight, behavior: 'smooth' })
-          const res = await fetch(`/chat/api?${new URLSearchParams({ q: text })}`)
+          const res = await fetch(`/api?${new URLSearchParams({ q: text })}`)
           let data = await res.text()
           const last = this.records[this.records.length - 1]
           delete last.loading
           last.failed = res.status !== 200
 
           if (res.status !== 200)
-            data = res.statusText
+            data = res.statusText || data
           else
             data = md.render(data)
     
@@ -178,8 +210,9 @@
             Prism.hooks.run('complete', { element, code: element.innerText })
           })
           records.scrollTo({ top: records.scrollHeight, behavior: 'smooth' })
+          this.isLoading = false
         },
-  },
+      },
     }).mount('#app')
   </script>
 </body>

@@ -1,9 +1,0 @@
-name = "proxy-github"
-main = "src/index.ts"
-compatibility_date = "2022-07-31"
-
-[vars]
-# DOMAIN = "" # domain name of the site
-
-[dev]
-local_protocol = "https"
