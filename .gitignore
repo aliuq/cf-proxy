@@ -168,4 +168,9 @@ dist
 
 # wrangler project
 
-.history/
+.history/**
+!template/.env
+**/dist/*.wrangler.toml
+workers/**/wrangler.toml
+.dev.vars
+workers/openai-forward/**
