@@ -1,20 +1,25 @@
 # Worker: openai
 
-## 文件结构
+通过 API Key 实现 OpenAI 的 ChatGPT 机器人聊天
 
-1. `src`：源文件目录
-2. `wrangler.toml`：wrangler 配置文件
-3. `wrangler.config.ts`：生成 `wrangler.toml` 的配置文件
-4. `types.d.ts`：TypeScript 类型声明文件
-5. `package.json`：npm 配置文件
-6. `README.md`：项目说明文档
-7. `build.config.ts`：unbuild 构建配置文件
+示例地址：[https://chat.llll.host](https://chat.llll.host)
 
-### `wrangler.config.ts`
+## 环境变量
 
-动态生成 `wrangler.toml` 的配置文件，可以在 `wrangler.config.ts` 中配置，详细配置参考 [wrangler 文档](https://developers.cloudflare.com/workers/wrangler/configuration)
-注意不可继承的参数有：`define`、`vars`、`durable_objects`、`kv_namespaces`、`r2_buckets`、`services`，意思是如果配置有多个环境，在顶级配置了 vars 参数，那么在子环境中如果没有配置的话，它不会继承顶级的这个参数，而是会忽略掉。
++ `__DOMAIN__`: 主域名，用于配置路由、触发器等
++ `OPENAI_API_KEY`: OpenAI API Key
 
-#### Options
+默认参数配置:
 
-`unbuild`: `boolean` 是否使用 [unbuild](https://github.com/unjs/unbuild) 构建，默认为 `false`，仅在执行 `publish` 命令时生效
+```ts
+const params: CreateCompletionRequest = {
+  model: 'text-davinci-003',
+  prompt: Prompt,
+  temperature: 0.9,
+  max_tokens: 150,
+  top_p: 1,
+  frequency_penalty: 0.0,
+  presence_penalty: 0.6,
+  stop: [' Human:', ' AI:'],
+}
+```
