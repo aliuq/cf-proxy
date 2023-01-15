@@ -1,37 +1,26 @@
-const index = {
-  async fetch(request, env, _ctx) {
-    const needCancel = await needCancelRequest(request);
-    if (needCancel)
-      return new Response("", { status: 204 });
-    const url = new URL(request.url);
-    const { subdomain } = getDomainAndSubdomain(request);
-    if (url.pathname === "/robots.txt")
-      return new Response("User-agent: *\nDisallow: /", { status: 200 });
-    if (subdomain === "ip" && url.pathname === "/") {
-      return new Response(request.headers.get("cf-connecting-ip"), {
-        status: 200,
-        headers: { "content-type": "text/plain;charset=utf-8", "git-hash": env.GIT_HASH }
-      });
-    }
-    return new Response(`Unsupported request url: ${decodeURIComponent(request.url)}`, {
-      status: 200,
-      headers: { "content-type": "text/plain;charset=utf-8", "git-hash": env.GIT_HASH }
-    });
-  }
-};
+async function replyText(text, env, init = {}) {
+  return new Response(text, deepMerge({
+    status: 200,
+    headers: { "content-type": "text/plain;charset=UTF-8", "version": env.VERSION }
+  }, init));
+}
+async function replyUnsupport(options, env, init = {}) {
+  return new Response(renderTemplate("Unsupported url {{ url }}", options), deepMerge({
+    status: 200,
+    headers: { "content-type": "text/plain;charset=UTF-8", "version": env.VERSION }
+  }, init));
+}
 function getDomainAndSubdomain(request) {
   const url = new URL(request.url);
   const hostArr = url.host.split(".");
   let subdomain = "";
   let domain = "";
-  if (hostArr.length > 2) {
-    subdomain = hostArr[0];
-    domain = hostArr.slice(1).join(".");
-  } else if (hostArr.length === 2) {
-    subdomain = hostArr[1].match(/^localhost(:\d+)?$/) ? hostArr[0] : "";
-    domain = hostArr[1].match(/^localhost(:\d+)?$/) ? hostArr[1] : hostArr.join(".");
+  if (url.hostname.endsWith("localhost")) {
+    subdomain = hostArr.length === 1 ? "" : hostArr[0];
+    domain = hostArr.length === 1 ? hostArr[0] : hostArr.slice(1).join(".");
   } else {
-    domain = hostArr.join(".");
+    subdomain = hostArr.length > 2 ? hostArr[0] : "";
+    domain = hostArr.length > 2 ? hostArr.slice(1).join(".") : hostArr.join(".");
   }
   return { domain, subdomain };
 }
@@ -41,7 +30,49 @@ async function needCancelRequest(request, matches = []) {
     "/favicon.",
     "/sw.js"
   ];
-  return matches.some((match) => url.pathname.includes(match));
+  const isCancel = matches.some((match) => url.pathname.includes(match));
+  if (isCancel)
+    return replyText("", {}, { status: 204 });
 }
+function renderTemplate(content, data) {
+  return content.replace(/\{{\s*([a-zA-Z0-9_]+)\s*}}/g, (match, key) => {
+    return data[key] || "";
+  });
+}
+function deepMerge(target, ...sources) {
+  for (const source of sources) {
+    if (isObject(target) && isObject(source)) {
+      for (const key in source) {
+        if (isObject(source[key])) {
+          if (!target[key]) {
+            target[key] = {};
+          }
+          deepMerge(target[key], source[key]);
+        } else {
+          target[key] = source[key];
+        }
+      }
+    }
+  }
+  return target;
+}
+function isObject(item) {
+  return item && typeof item === "object" && !Array.isArray(item);
+}
+
+const index = {
+  async fetch(request, env, _ctx) {
+    const needCancel = await needCancelRequest(request);
+    if (needCancel)
+      return needCancel;
+    const url = new URL(request.url);
+    if (url.pathname === "/robots.txt")
+      return replyText("User-agent: *\nDisallow: /", env);
+    const { subdomain } = getDomainAndSubdomain(request);
+    if (subdomain === "ip" && url.pathname === "/")
+      return replyText(request.headers.get("cf-connecting-ip"), env);
+    return replyUnsupport(request, env);
+  }
+};
 
 export { index as default };

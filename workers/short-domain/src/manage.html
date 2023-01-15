@@ -1,0 +1,194 @@
+<html>
+
+<head>
+  <title>Short Domain Manage</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <!-- Reset Css -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@unocss/reset/tailwind.min.css">
+  <!-- Vue -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <!-- VueVirtualScroller -->
+  <link rel="stylesheet" href="https://unpkg.com/vue-virtual-scroller/dist/vue-virtual-scroller.css"/>
+  <script src="https://unpkg.com/vue-virtual-scroller@2.0.0-beta.7/dist/vue-virtual-scroller.min.js"></script>
+  <!-- ElementPlus -->
+  <link rel="stylesheet" href="https://unpkg.com/element-plus@2.2.28/dist/index.css">
+  <link rel="stylesheet" href="https://unpkg.com/element-plus@2.2.28/theme-chalk/dark/css-vars.css">
+  <script src="https://unpkg.com/element-plus@2.2.28/dist/index.full.min.js"></script>
+  <!-- Vueuse -->
+  <script src="https://unpkg.com/@vueuse/shared@9.10.0"></script>
+  <script src="https://unpkg.com/@vueuse/core@9.10.0"></script>
+  <style>
+    [v-cloak] { display: none; }
+    [un-cloak] { display: none; }
+  </style>
+</head>
+
+<body>
+  <div id="app" v-cloak un-cloak class="w-screen h-screen overflow-hidden">
+    <div class="absolute top-4 right-4 flex items-center">
+      <el-icon class="cursor-pointer mr-4" size="32" opacity="75 hover:100" i-carbon-add-alt @click="actions.jump({ source: '/' })"></el-icon>
+      <el-icon class="cursor-pointer" size="32" opacity="75 hover:100" i="carbon-sun dark:carbon-moon" @click="toggleDark()"></el-icon>
+    </div>
+
+    <main class="mx-auto md:max-w-1200px md:my-50px">
+      <div class="h-60px flex items-center justify-between">
+        <h2 class="text-2xl font-bold text-$el-text-primary">所有短网址({{ list.length }})</h2>
+        <el-input v-model="filter" class="!w-2/5" placeholder="输入短网址或源地址" @keydown.enter.prevent="onFilter">
+          <template #append>
+            <el-button class="!rounded-l-0" hover="!border-$el-color-primary !text-$el-color-primary" @click="onFilter">搜索</el-button>
+          </template>
+        </el-input>
+      </div>
+
+      <div class="w-full text-sm shadow-sm table-border" bg="white dark:dark" text="dark-200 dark:light-200">
+        <div class="flex items-center select-none font-semibold text-base" bg="light-300 dark:dark-300">
+          <span class="w-20 table-th justify-center px-0">序号</span>
+          <span class="flex-1 table-th max-w-300px">短网址</span>
+          <span class="flex-1 table-th">源网址</span>
+          <span class="flex-1 table-th max-w-240px">操作</span>
+        </div>
+        <template v-if="list.length">
+          <dynamic-scroller
+            :items="list"
+            :min-item-size="54"
+            class="h-[calc(100vh-208px)] w-full !overflow-overlay"
+            scrollbar="~ rounded"
+            scrollbar-track-color="transparent hover:black-/10 dark:hover:white-/10"
+            scrollbar-thumb-color="black-/25 dark:white-/20 hover:black-/40 hover:dark:white-/30"
+            v-slot="{ item, index, active }"
+          >
+            <dynamic-scroller-item
+              class="flex transition-all table-border border-0 border-b box-border hover:bg-light-300 dark:hover:bg-dark-300"
+              :item="item"
+              :data-index="index"
+              :active="active"
+              :size-dependencies="[item.short,item.source]"
+            >
+              <div class="w-20 table-td justify-center text-base px-0 select-none">{{ index + 1 }}</div>
+              <div class="flex-1 table-td max-w-300px" :title="item.short">{{ item.short }}</div>
+              <div class="flex-1 table-td overflow-hidden break-all" :title="item.source">{{ item.source }}</div>
+              <div class="w-240px flex-shrink-0 table-td">
+                <el-button-group size="small">
+                  <el-popconfirm title="确定删除吗?" confirm-button-text="确认" cancel-button-text="取消" @confirm="actions.delete(item, index)">
+                    <template #reference>
+                      <el-button type="danger"> <template #icon><el-icon i="material-symbols-delete-outline"></el-icon></template>删除</el-button>
+                    </template>
+                  </el-popconfirm>
+                  <el-button type="primary" @click="actions.copy(item)"> <template #icon><el-icon i="carbon-copy"></el-icon></template>复制</el-button>
+                  <el-button type="success" @click="actions.jump(item)"> <template #icon><el-icon i="carbon-launch"></el-icon></template>访问</el-button>
+                </el-button-group>
+              </div>
+            </dynamic-scroller-item>
+          </dynamic-scroller>
+        </template>
+        <template v-else>
+          <div class="text-center text-xl py-4 text-slate-400">
+            <el-empty description="暂无数据" />
+          </div>
+        </template>
+      </div>
+    </main>
+  </div>
+    
+  <script type="module">
+    // UnoCSS
+    import init from 'https://esm.sh/@unocss/runtime@0.48.3'
+    import presetUno from 'https://esm.sh/@unocss/preset-uno@0.48.3'
+    import presetAttributify from 'https://esm.sh/@unocss/preset-attributify@0.48.3'
+    import presetMini from 'https://esm.sh/@unocss/preset-mini@0.48.3'
+    import presetIcons from 'https://esm.sh/@unocss/preset-icons@0.48.3/browser'
+    import { presetScrollbar } from 'https://esm.sh/unocss-preset-scrollbar@0.2.1'
+
+    init({
+      defaults: {
+        presets: [
+          presetUno(),
+          presetAttributify(),
+          presetMini(),
+          presetIcons({ cdn: 'https://esm.sh/' }),
+          presetScrollbar(),
+        ],
+        rules: [],
+        shortcuts: [{
+          'table-border': 'border border-solid border-light-600 dark:border-dark-200',
+          'table-th': 'table-border border-0 siblings:border-l p-4 flex items-center ',
+          'table-td': 'table-border p-4 border-0 siblings:border-l flex items-center text-sm flex-shrink-0',
+        }],
+      },
+    })
+
+    const { useDark, useToggle } = window.VueUse
+    const { createApp, ref, onMounted } = window.Vue
+    const VueVirtualScroller = window.VueVirtualScroller.default
+    const ElementPlus = window.ElementPlus.default
+    const { ElMessage } = window.ElementPlus
+
+    const app = createApp({
+      setup() {
+        const request = async (url, options) => {
+          const res = await fetch(url, Object.assign({
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+          }, options))
+          const data = await res.json()
+          if (data.error) {
+            ElMessage.error({ message: data.error })
+            return
+          }
+          return data
+        }
+    
+        const isDark = useDark()
+        const toggleDark = useToggle(isDark)
+
+        const sourceList = []
+        const list = ref([])
+        const fetchAllDomains = async (cursor = '') => {
+          const res = await request('/api/list', { body: JSON.stringify({ cursor }) })
+          sourceList.push(...Object.assign([], res.data))
+          list.value.push(...res.data)
+          if (res.cursor)
+            await fetchAllDomains(res.cursor)
+        }
+
+        const filter = ref('')
+        const onFilter = async () => {
+          list.value = sourceList.filter(item => item.source.includes(filter.value) || item.short.includes(filter.value))
+        }
+    
+        const actions = {
+          async delete(row, index) {
+            const data = await request('/api/delete', { body: JSON.stringify({ url: row.source }) })
+            if (data) {
+              const sourceIndex = sourceList.findIndex(item => item.short === row.short)
+              sourceList.splice(sourceIndex, 1)
+              list.value.splice(index, 1)
+              ElMessage.success({ message: data.message })
+              if (list.value.length === 0) {
+                filter.value = ''
+                onFilter()
+              }
+            }
+          },
+          copy: (row) => {
+            navigator.clipboard.writeText(row.short)
+            ElMessage.success({ message: '复制成功' })
+          },
+          jump: (row) => {
+            window.open(row.source, '_blank')
+          },
+        }
+
+        onMounted(() => fetchAllDomains())
+
+        return { list, isDark, toggleDark, filter, onFilter, actions }
+      },
+    })
+    app.use(VueVirtualScroller)
+    app.use(ElementPlus)
+    app.mount('#app')
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,22 @@
+{
+  "name": "cf-workers-short-domain",
+  "type": "module",
+  "version": "0.0.1",
+  "description": "Simple cloudflare worker short-domain",
+  "author": "AliuQ <aliuq@bilishare.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/aliuq/cf-proxy/tree/master/workers/short-domain#readme",
+  "bugs": {
+    "url": "https://github.com/aliuq/cf-proxy/issues"
+  },
+  "keywords": [
+    "cloudflare",
+    "worker",
+    "short-domain"
+  ],
+  "main": "dist/index.mjs",
+  "scripts": {
+    "dev": "wrangler dev -l",
+    "build": "unbuild"
+  }
+}
