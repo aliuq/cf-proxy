@@ -38,7 +38,7 @@ async function wranglerConfig({ unbuild: useUnbuild, env }: Options = { unbuild:
      *
      *  such as: `import axios from 'axios'`,
      */
-    // no_bundle: useUnbuild ? true : undefined,
+    // no_bundle: undefined,
     vars: {
       mode: 'default',
       ...vars,
