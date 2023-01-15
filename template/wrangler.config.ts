@@ -49,16 +49,16 @@ async function wranglerConfig({ unbuild: useUnbuild, env: _env }: Options = { un
       port,
     },
     env: {
-      // // For local development, Do not pulish the enviroment to cloudflare.
-      // localhost: {
-      //   vars: {
-      //     mode: 'localhost',
-      //     ...vars,
-      //   },
-      //   routes: [
-      //     { pattern: `foo.localhost:${port}`, zone_name: `localhost:${port}`, custom_domain: true },
-      //   ],
-      // },
+      // For local development, Do not pulish the enviroment to cloudflare.
+      localhost: {
+        vars: {
+          mode: 'localhost',
+          ...vars,
+        },
+        // routes: [
+        //   { pattern: `foo.localhost:${port}`, zone_name: `localhost:${port}`, custom_domain: true },
+        // ],
+      },
       production: {
         vars: {
           mode: 'production',

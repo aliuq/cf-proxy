@@ -1,6 +1,6 @@
 # Worker: short-domain
 
-短网址服务
+短网址服务, 示例地址：[https://s.llll.host](https://s.llll.host)
 
 ## kv:namespace
 
