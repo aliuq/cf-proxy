@@ -1,0 +1,192 @@
+<html>
+
+<head>
+  <title>添加短网址</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@unocss/reset/tailwind.min.css">
+  <!-- Vue -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <!-- ElementPlus -->
+  <link rel="stylesheet" href="https://unpkg.com/element-plus@2.2.28/dist/index.css">
+  <link rel="stylesheet" href="https://unpkg.com/element-plus@2.2.28/theme-chalk/dark/css-vars.css">
+  <script src="https://unpkg.com/element-plus@2.2.28/dist/index.full.min.js"></script>
+  <!-- Vueuse -->
+  <script src="https://unpkg.com/@vueuse/shared@9.10.0"></script>
+  <script src="https://unpkg.com/@vueuse/core@9.10.0"></script>
+  <style>
+    [v-cloak] { display: none; }
+    [un-cloak] { display: none; }
+  </style>
+</head>
+
+<body>
+  <div id="app" v-cloak un-cloak>
+    <div class="absolute top-4 right-4 flex justify-center">
+      <el-icon v-if="isAuth" class="cursor-pointer mr-4" size="32" opacity="75 hover:100" i-carbon-user-admin @click="onJump('/admin')"></el-icon>
+      <el-icon class="cursor-pointer" size="32" opacity="75 hover:100" i="carbon-sun dark:carbon-moon" @click="toggleDark()"></el-icon>
+    </div>
+
+    <main class="mx-auto md:max-w-800px md:my-50px">
+      <div class="h-60px mb-4">
+        <h2 class="text-2xl font-bold text-$el-text-color-primary">添加短网址</h2>
+        <p class="text-sm text-$el-text-color-secondary flex-center justify-start">添加成功或者url已经存在将会自动将短网址复制到剪贴板</p>
+      </div>
+
+      <el-form ref="ruleFormRef" :model="ruleForm" :rules="rules" size="large" label-position="top" label-width="120px" status-icon>
+        <el-form-item label="ID" prop="id" v-if="isAuth">
+          <el-input v-model="ruleForm.id" resize="none" autocomplete="on" placeholder="支持自定义ID, 如: https://short.domain/abc" class="break-all"></el-input>
+        </el-form-item>
+        <el-form-item label="URL" prop="url">
+          <el-input v-model="ruleForm.url" type="textarea" :autosize="{ minRows: 3, maxRows: 20 }" resize="none" autocomplete="on" placeholder="输入URL, https://www.baidu.com" class="break-all"></el-input>
+        </el-form-item>
+        <el-form-item>
+          <div class="w-full flex justify-end">
+            <el-button type="primary" :loading="isLoading" @click="submitForm(ruleFormRef)">添加</el-button>
+          </div>
+        </el-form-item>
+
+        <el-descriptions v-if="data.short && data.source" title="添加结果" :column="1" border class="mt-4" >
+          <el-descriptions-item label="短网址" class-name="break-all" label-class-name="w-20 select-none">
+            <el-button type="success" link class="!whitespace-normal !text-left !leading-6" @click="onCopy(data.short)">{{ data.short }}</el-button>
+          </el-descriptions-item>
+          <el-descriptions-item label="原网址" class-name="break-all" label-class-name="w-20 select-none">
+            <el-button type="success" link class="!whitespace-normal !text-left !leading-6" @click="onJump(data.source)">{{ data.source }}</el-button>
+          </el-descriptions-item>
+        </el-descriptions>
+      </el-form>
+    </main>
+
+    
+    <script type="module" setup>
+      // UnoCSS
+      import init from 'https://esm.sh/@unocss/runtime@0.48.3'
+      import presetUno from 'https://esm.sh/@unocss/preset-uno@0.48.3'
+      import presetAttributify from 'https://esm.sh/@unocss/preset-attributify@0.48.3'
+      import presetMini from 'https://esm.sh/@unocss/preset-mini@0.48.3'
+      import presetIcons from 'https://esm.sh/@unocss/preset-icons@0.48.3/browser'
+      import { presetScrollbar } from 'https://esm.sh/unocss-preset-scrollbar@0.2.1'
+
+      init({
+        defaults: {
+          presets: [
+            presetUno(),
+            presetAttributify(),
+            presetMini(),
+            presetIcons({ cdn: 'https://esm.sh/' }),
+            presetScrollbar(),
+          ],
+          rules: [],
+          shortcuts: [{ 'flex-center': 'flex justify-center items-center' }],
+        },
+      })
+
+      const { useDark, useToggle } = window.VueUse
+      const { createApp, ref, computed, reactive } = window.Vue
+      const ElementPlus = window.ElementPlus.default
+      const { ElMessage } = window.ElementPlus
+
+      const app = createApp({
+        setup() {
+          const request = async (url, options) => {
+            const res = await fetch(url, Object.assign({
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+            }, options))
+            const data = await res.json()
+            if (data.error) {
+              ElMessage.error({ message: data.error })
+              return
+            }
+            return data
+          }
+
+          const isDark = useDark()
+          const toggleDark = useToggle(isDark)
+
+          const cookies = reactive(document.cookie.split(';').reduce((acc, cur) => {
+            const [key, value] = cur.split('=')
+            acc[key.trim()] = value === 'true' ? true : value === 'false' ? false : value
+            return acc
+          }, {}))
+          const isAuth = computed(() => !!cookies.auth)
+
+          const isLoading = ref(false)
+          const data = ref({})
+
+          const onCopy = async (text, showTips = true) => {
+            if (navigator?.clipboard) {
+              await navigator.clipboard.writeText(text)
+            }
+            else {
+              const el = document.createElement('textarea')
+              el.value = text
+              document.body.appendChild(el)
+              el.select()
+              document.execCommand('copy')
+              document.body.removeChild(el)
+            }
+            if (showTips)
+              ElMessage.success({ message: '复制成功' })
+          }
+          const onJump = (url) => {
+            window.open(url, '_blank')
+          }
+
+          const ruleFormRef = ref()
+          const ruleForm = reactive({ url: '', id: '' })
+          const validateUrl = (rule, value, callback) => {
+            if (!value)
+              callback(new Error('请输入URL'))
+      
+            if (!value.match(/^https?:\/\//))
+              callback(new Error('请输入正确的URL'))
+      
+            callback()
+          }
+          const validateId = (rule, value, callback) => {
+            if (value && !value.match(/^[a-zA-Z0-9]+[a-zA-Z0-9_-]*?$/))
+              callback(new Error('请输入正确的ID, 以字母、数字开头，包含字母、数字、下划线和中划线'))
+            callback()
+          }
+          const rules = reactive({
+            url: [{ validator: validateUrl, trigger: 'change' }],
+            id: [{ validator: validateId, trigger: 'change' }],
+          })
+          const submitForm = (formEl) => {
+            if (!formEl)
+              return
+            formEl.validate(async (valid) => {
+              if (!valid)
+                return false
+
+              isLoading.value = true
+              const url = encodeURIComponent(decodeURIComponent(ruleForm.url))
+              const res = await request('/api/new', { body: JSON.stringify({ url, id: ruleForm.id }) }).catch((err) => {
+                isLoading.value = false
+                ElMessage.error({ message: err.message })
+              })
+              isLoading.value = false
+              if (res.code !== 0)
+                ElMessage.error({ message: res.message })
+              else
+                ElMessage.success({ message: '添加成功' })
+
+              if (res.data) {
+                ruleForm.url = ''
+                formEl.resetFields()
+                data.value = res.data
+                await onCopy(res.data.short, false)
+              }
+            })
+          }
+      
+          return { isDark, toggleDark, isAuth, isLoading, ruleFormRef, ruleForm, rules, submitForm, data, onCopy, onJump }
+        },
+      })
+      app.use(ElementPlus)
+      app.mount('#app')
+    </script>
+</body>
+
+</html>
