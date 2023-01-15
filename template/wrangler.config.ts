@@ -32,7 +32,7 @@ async function wranglerConfig({ unbuild: useUnbuild, env: _env }: Options = { un
   return {
     name: '{{ name }}',
     main: useUnbuild ? `${outName}.mjs` : `${nameFull}.ts`,
-    compatibility_date: new Date().toISOString().split('T')[0],
+    compatibility_date: '{{ date }}',
     /** If set to `true`, the worker will not be bundled. so the output file
      *  must be a single file and no import module. if exists, will throw error.
      *
