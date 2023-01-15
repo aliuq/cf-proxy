@@ -192,17 +192,12 @@
           await new Promise(resolve => setTimeout(resolve, 50))
           records.scrollTo({ top: records.scrollHeight, behavior: 'smooth' })
           const res = await fetch(`/api?${new URLSearchParams({ q: text })}`)
-          let data = await res.text()
+          const data = await res.json()
           const last = this.records[this.records.length - 1]
           delete last.loading
-          last.failed = res.status !== 200
+          last.failed = data.code !== 0
+          last.text = data.code ? (md.render(data.text) || res.statusText) : md.render(data.text)
 
-          if (res.status !== 200)
-            data = res.statusText || data
-          else
-            data = md.render(data)
-    
-          last.text = data
           await nextTick()
           const elements = document.querySelectorAll(`[data-r="${this.records.length - 1}"] pre code`)
           elements.length && elements.forEach((element) => {
