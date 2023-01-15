@@ -1,8 +1,9 @@
-import type { CreateCompletionRequest } from 'openai'
+import type { CreateCompletionRequest, CreateModerationResponseResultsInnerCategories } from 'openai'
 import { Configuration, OpenAIApi } from 'openai'
 import fetchAdapter from '@vespaiach/axios-fetch-adapter'
-import { getDomainAndSubdomain, needCancelRequest, replyText, replyUnsupport } from '../../utils'
+import { getDomainAndSubdomain, needCancelRequest, replyHtml, replyJson, replyText, replyUnsupport } from '../../utils'
 import ChatHtml from './chat.html'
+import config from './default.config'
 
 export default {
   async fetch(request: Request, env: ENV, _ctx: ExecutionContext): Promise<Response> {
@@ -27,7 +28,7 @@ export default {
     }
 
     if (url.pathname === '/')
-      return new Response(ChatHtml, { status: 200, headers: { 'content-type': 'text/html;charset=utf-8' } })
+      return replyHtml(ChatHtml, env)
     else if (url.pathname === '/api')
       return await handlerApi(url, env)
 
@@ -40,27 +41,15 @@ async function handlerApi(url: URL, env: ENV) {
   if (!prompt)
     return replyText('Missing query parameter: q', env)
 
-  const configuration = new Configuration({
-    apiKey: env.OPENAI_API_KEY,
-    baseOptions: {
-      adapter: fetchAdapter,
-    },
-  })
-  const openai = new OpenAIApi(configuration)
-
+  const openai = await initOpenAI(env)
   try {
-    const params: CreateCompletionRequest = {
-      model: 'text-davinci-003',
-      prompt,
-      temperature: 0.9,
-      max_tokens: 150,
-      top_p: 1,
-      frequency_penalty: 0.0,
-      presence_penalty: 0.6,
-      stop: [' Human:', ' AI:'],
-    }
-    const response = await openai.createCompletion(params)
-    return replyText(response.data.choices[0].text as string, env)
+    const moderation = await checkModeration(openai, prompt)
+    if (moderation)
+      return replyJson({ code: -1, text: moderation }, env)
+
+    const params: CreateCompletionRequest = Object.assign({}, config.conversation.chat, { prompt, user: 'aliuq' })
+    const { data } = await openai.createCompletion(params)
+    return replyJson({ code: 0, text: data.choices[0].text }, env)
   }
   catch (error: any) {
     // eslint-disable-next-line no-console
@@ -70,18 +59,50 @@ async function handlerApi(url: URL, env: ENV) {
   }
 }
 
-// Errors JSON Array
-// [
-//   {
-//     "code": 401,
-//     "msg": "Incorrect API key provided: sk-qJ9nq***************************************z1RR. You can find your API key at https://beta.openai.com."
-//   },
-//   {
-//     "code": 429,
-//     "msg": "Your access was terminated due to violation of our policies, please check your email for more information. If you believe this is in error and would like to appeal, please contact support@openai.com."
-//  },
-//   {
-//     "code": 429,
-//     "msg": "You exceeded your current quota, please check your plan and billing details."
-//   }
-// ]
+/** 初始化 OpenAI 实例 */
+async function initOpenAI(env: ENV) {
+  return new OpenAIApi(new Configuration({
+    apiKey: env.OPENAI_API_KEY,
+    baseOptions: { adapter: fetchAdapter },
+  }))
+}
+
+/** 判断输入的文本是否违反了 OpenAI 的内容策略，防止被封号 */
+async function checkModeration(openai: OpenAIApi, input: string) {
+  try {
+    const { data } = await openai.createModeration({ model: 'text-moderation-latest', input })
+    const { flagged, categories } = data.results[0]
+    // 违反内容策略
+    if (flagged) {
+      const maps: Record<Categories, string> = {
+        'hate': '表达、煽动或促进基于种族、性别、民族、宗教、国籍、性取向、残疾状况或种姓的仇恨的内容',
+        'hate/threatening': '还包括对目标群体的暴力或严重伤害的仇恨性内容',
+        'self-harm': '倡导、鼓励或描述自我伤害行为的内容，如自杀、切割和饮食紊乱',
+        'sexual': '旨在引起性兴奋的内容，如对性活动的描述，或促进性服务的内容（不包括性教育和健康）',
+        'sexual/minors': '包括未满18岁的人的性内容',
+        'violence': '宣扬或美化暴力或赞美他人的痛苦或羞辱的内容',
+        'violence/graphic': '描绘死亡、暴力或严重身体伤害的暴力内容，其画面感极强',
+      }
+      const text: string[] = []
+      Object.keys(categories).forEach((key) => {
+        if (!categories[key as Categories])
+          text.push(maps[key as Categories])
+      })
+
+      const mdtext = [
+        '# 违反内容策略',
+        '',
+        text.map((item: string, index: number) => `${index + 1} ${item}`).join('\n'),
+      ].join('\n')
+
+      return mdtext
+    }
+
+    return ''
+  }
+  catch (error: any) {
+    return error.response?.data?.error?.message || error.message || ''
+  }
+}
+
+type Categories = keyof CreateModerationResponseResultsInnerCategories

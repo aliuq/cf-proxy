@@ -55,6 +55,12 @@ async function wranglerConfig({ unbuild: useUnbuild, env }: Options = { unbuild:
           mode: 'localhost',
           ...vars,
         },
+        routes: env.DOMAIN
+          ? [
+            { pattern: `chat.localhost:${port}`, zone_name: `localhost:${port}`, custom_domain: true },
+            { pattern: `localhost:${port}`, zone_name: `localhost:${port}`, custom_domain: true },
+          ]
+          : undefined,
       },
       production: {
         vars: {
