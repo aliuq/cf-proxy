@@ -1,3 +1,4 @@
+<!-- markdownlint-disable no-inline-html -->
 # Worker: github
 
 通过 Cloudflare Workers 代理 GitHub 的请求来实现 Github 无法访问的问题，支持文件代理加速下载
@@ -142,6 +143,63 @@ npm install wrangler -g
 ![s1](https://img2.bilishare.com/img/2022/08/01/223559c7ae0.png/normal)
 
 + [手把手实现 Github 代理加速](https://www.bilishare.com/tech/2022/08/23/cf-proxy-github.html)
+
+## Q&A
+
+<details>
+<summary>域名被封，被注册局锁定</summary>
+
+以 `.host` 域名为例
+
+可能会因为未知的原因被 Google/Netcraft 认定是网络欺诈和诈骗网站，从而导致域名被封
+
+### Google
+
+Google 的解决办法是点击报告检测问题，进行反馈，反馈内容可以和下面的模板类似，稍微修改一下，然后等待解封
+
+![Google](./screenshot/1.jpg)
+
+### Netcraft
+
+Netcraft 的解决办法是提交申诉，然后等待解封
+
+找到对应域名的域名注册局，host 域名是在 [Radix](https://radix.website/report-abuse#unsuspensionsteps) 上面进行申请解封，输入域名，可以看到域名被锁定的原因，申请解封需要填入邮件、域名以及内容。
+
+我分两天申请了两次，是否解封应该和输入的内容有关，正常一封邮件足够了，申请后大概一小时左右收到了官方的回复，内容是指出了域名被锁定的原因
+
+```txt
+The domain name llll.host  has been suspended due to its blacklisting by Netcraft for phishing activities. xxxxxx
+```
+
+然后回复了下面这封邮件，再次进行解释，三天后收到了解封的邮件
+
+### 邮件模板
+
+> **Note**  
+> 模板仅供参考，不保证一定能解封，修改 `example.com` 为你的域名，修改 `<Your Repo>` 为你的仓库地址
+
+```txt
+Hi,
+
+Thank you for your reply, this address is one of the proxy GitHub requests
+
+gist.example.com -> gist.github.com
+https://gist.example.com/starred/
+
+According to the proxy forwarding logic, the content of this address should be the same as the one shown below
+
+https://gist.github.com/starred/
+
+Because it doesn't have phishing content, it just does a layer of forwarding and doesn't store any data, it's deployed on top of cloudflare workers and the source code is stored on GitHub
+
+https://github.com/<Your Repo>
+
+The purpose of this URL is to allow users who do not have access to GitHub to be able to access the resources on GitHub normally, such as in China, I hope to review it again and look forward to your reply!
+
+Thanks
+```
+
+</details>
 
 ## 其他代理项目
 
