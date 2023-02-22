@@ -89,6 +89,10 @@ async function needCancelRequest(request: Request, matches: string[] = []): Prom
     : [
       '/favicon.',
       '/sw.js',
+      '/login',
+      '/join',
+      '/session',
+      '/auth',
     ]
   return matches.some(match => url.pathname.includes(match))
 }
@@ -104,7 +108,7 @@ function getNewRequest(url: URL, request: Request) {
 
 /** 代理转发处理
  */
-async function proxy(url: URL, request: Request, env: ENV) {
+async function proxy(url: URL, request: Request, _env: ENV) {
   try {
     const res = await fetch(url.toString(), request)
     const headers = res.headers
