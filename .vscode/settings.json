@@ -1,5 +1,8 @@
 {
   "yaml.schemas": {
     "https://json.schemastore.org/github-workflow.json": "file:///home/liuq/apps/proxy-github/.github/workflows/deploy.yml"
-  }
+  },
+  "unocss.root": [
+    "pages/openai"
+  ]
 }
