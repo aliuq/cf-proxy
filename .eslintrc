@@ -1,6 +1,16 @@
 {
+  "root": true,
   "extends": "@aliuq",
-  "globals": {
-    "Prism": true
+  "plugins": [
+    "html"
+  ],
+  "rules": {
+    "vue/max-attributes-per-line": ["error", {
+      "singleline": 3,
+      "multiline": {
+        "max": 1
+      }
+    }],
+    "vue/singleline-html-element-content-newline": "off"
   }
 }

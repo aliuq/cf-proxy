@@ -173,3 +173,10 @@ out
 workers/**/wrangler.toml
 .dev.vars
 workers/openai-forward/**
+
+*.http
+.output/
+functions/
+output/
+pages/
+workers/chatgpt/

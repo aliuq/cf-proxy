@@ -1,29 +1,33 @@
 {
   "compilerOptions": {
-    "target": "es2021",
+    "target": "esnext",
     "lib": [
-      "es2021",
+      "esnext",
       "dom"
     ],
     "jsx": "react",
-    "module": "es2022",
+    "module": "esnext",
     "moduleResolution": "node",
     "types": [
-      "@cloudflare/workers-types",
-      "node"
+      "node",
+      "@cloudflare/workers-types"
     ],
     "resolveJsonModule": true,
     "allowJs": true,
     "checkJs": false,
     "noEmit": true,
     "isolatedModules": true,
+    "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true
   },
+  "include": ["scripts/**/*", "cli/**/*", "workers/**/*", "pages/**/*", "*.d.ts"],
   "exclude": [
     "**/node_modules",
-    "**/test"
+    "**/test",
+    "pages/**/functions/*"
   ]
 }
+
