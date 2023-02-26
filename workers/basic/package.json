@@ -1,0 +1,21 @@
+{
+  "name": "cf-workers-basic",
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Simple cloudflare worker basic",
+  "author": "AliuQ <aliuq@bilishare.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/aliuq/cf-proxy/tree/master/workers/basic#readme",
+  "bugs": {
+    "url": "https://github.com/aliuq/cf-proxy/issues"
+  },
+  "keywords": [
+    "cloudflare",
+    "worker",
+    "basic"
+  ],
+  "main": "dist/index.mjs",
+  "scripts": {
+    "build": "tsup"
+  }
+}
