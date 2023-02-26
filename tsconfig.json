@@ -21,13 +21,28 @@
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "paths": {
+      "@cli/*": [
+        "./cli/*"
+      ]
+    },
+    "baseUrl": "."
   },
-  "include": ["scripts/**/*", "cli/**/*", "workers/**/*", "pages/**/*", "*.d.ts"],
+  "include": [
+    "cli",
+    "pages",
+    "templates",
+    "workers",
+    "src/**/*",
+    "types.d.ts"
+  ],
   "exclude": [
-    "**/node_modules",
-    "**/test",
-    "pages/**/functions/*"
+    "**/dist/**/*",
+    "**/node_modules/**/*",
+    "**/functions/**/*",
+    "**/pages/*/.nuxt/**/*",
+    "**/pages/*/.output/**/*"
   ]
 }
 

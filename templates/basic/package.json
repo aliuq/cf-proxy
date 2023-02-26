@@ -16,7 +16,6 @@
   ],
   "main": "dist/index.mjs",
   "scripts": {
-    "dev": "wrangler dev -l",
-    "build": "unbuild"
+    "build": "tsup"
   }
 }

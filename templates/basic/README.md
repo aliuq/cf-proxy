@@ -4,9 +4,9 @@
 
 ```bash
 # 开发
-pnpm run exec {{ name }} dev --env localhost
+pnpm cf run {{ name }} dev --env localhost
 # 部署
-pnpm run exec {{ name }} publish --env production
+pnpm cf run {{ name }} publish --env production
 ```
 
 ## 环境变量

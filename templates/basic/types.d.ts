@@ -8,6 +8,5 @@ interface INTERNAL_ENV {
 }
 
 interface Options {
-  unbuild?: boolean
   env: INTERNAL_ENV
 }
