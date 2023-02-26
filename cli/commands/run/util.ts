@@ -246,13 +246,12 @@ export class RunHandler {
       spinner.succeed()
     }
 
+    // Bumpp version
+    await this.handlerRelease()
     // Run command `wrangler publish`
     await this.runWrangler()
     // Run command `wrangler secret:bulk`
     await this.handlerSecretBulk()
-
-    if (this._argv.release)
-      await this.handlerRelease()
   }
 
   protected async handlerDelete() {
@@ -295,10 +294,13 @@ export class RunHandler {
       console.log(`${green(`> ${bumppStr}`)}\n`)
       await this.exec(bumppStr)
 
+      console.log(`${green('> git add package.json')}\n`)
+      await this.exec('git add package.json')
+
       if (this._argv.loader) {
         // Add dist to git
         console.log(`${green('> git add dist')}\n`)
-        await this.exec('git add package.json dist')
+        await this.exec('git add dist')
       }
 
       // Commit and push to github
@@ -310,11 +312,8 @@ export class RunHandler {
       console.log(`${green('> git push')}\n`)
       await this.exec('git push')
 
-      console.log(cyan('\n# Reprepare Environment and publish\n'))
       // Reprepare env
       await this.prepareEnv()
-      // Run command `wrangler publish`
-      await this.runWrangler()
     }
   }
 
