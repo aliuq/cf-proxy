@@ -26,14 +26,13 @@
       "@cli/*": [
         "./cli/*"
       ]
-    },
-    "baseUrl": "."
+    }
   },
   "include": [
     "cli",
     "pages",
-    "templates",
     "workers",
+    "templates",
     "src/**/*",
     "types.d.ts"
   ],
