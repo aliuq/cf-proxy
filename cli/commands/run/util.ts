@@ -305,7 +305,7 @@ export class RunHandler {
 
       // Commit and push to github
       const pkg = await import(this._path.package)
-      const commitStr = `git commit -m "chore(${this._argv.name}):\\ release\\ v${pkg.version}"`
+      const commitStr = `git commit -m chore(${this._argv.name}):\\ release\\ v${pkg.version}`
       console.log(`${green(`> ${commitStr}`)}\n`)
       await this.exec(commitStr)
 
