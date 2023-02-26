@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import path from 'path'
 import os from 'node:os'
 import * as execa from 'execa'
-import type { Options as ExecaOptions } from 'execa'
+import type { Options as ExecaOptions, SyncOptions as ExecaSyncOptions } from 'execa'
 import ora from 'ora'
 import inquirerPkg from 'inquirer'
 import dotenv from 'dotenv'
@@ -32,6 +32,7 @@ export class RunHandler {
   _env: Record<string, string> = {}
   _envVars: Record<string, string> = {}
   _envVarsInternal: Record<string, string> = {}
+  _pkg: Record<string, any> = {}
 
   _wranglerConfig: Function = () => {}
   _wranglerConfigParsed: WranglerConfig = {} as WranglerConfig
@@ -104,7 +105,8 @@ export class RunHandler {
 
     const spinner2 = ora('Get commands...').start()
     const commands: any = getCommand()
-    const scripts = (await import(this._path.package)).scripts
+    this._pkg = (await import(this._path.package)).default
+    const scripts = this._pkg.scripts
     const scriptsCommands = Object.entries(scripts).map(([key, value]) => {
       return {
         name: logPretty(`pkg:${key}`, `🔵 ${green(value as string)}`),
@@ -147,7 +149,7 @@ export class RunHandler {
     spinner.succeed()
 
     const spinner2 = ora('Get wrangler config...').start()
-    this._wranglerConfigParsed = await this._wranglerConfig({ env: this._envVarsInternal })
+    await this.parseWranglerConfig()
     spinner2.text = green('Parsed wrangler.config.ts success')
 
     const envs = Object.keys(this._wranglerConfigParsed.env)
@@ -196,8 +198,7 @@ export class RunHandler {
   protected async handlerDev() {
     await this.prepareEnv()
 
-    // Write parsed wrangler config to wrangler.toml
-    fs.writeFileSync(this._path.wranglerTomlDev, toml.stringify(omit(this._wranglerConfigParsed, 'outDir')))
+    this.writeWranglerToml()
 
     // Write env vars to .dev.vars
     if (Object.keys(this._envVars).length) {
@@ -205,7 +206,7 @@ export class RunHandler {
       fs.writeFileSync(this._path.devVars, envVarsStr.join(os.EOL))
     }
 
-    // Set to un the preview of the Worker directly on your local machine
+    // Set to run the preview of the Worker directly on your local machine
     if (!('local' in this._argv))
       this._argv.local = true
 
@@ -227,27 +228,12 @@ export class RunHandler {
       }
 
       await this.exec('tsup')
-
-      // Check the out directory
-      if (this._wranglerConfigParsed.outDir) {
-        const outDir = path.resolve(this._path.root, this._wranglerConfigParsed.outDir)
-        if (!fs.existsSync(outDir)) {
-          console.log(red(`\`outDir\` ${outDir} does not exist`))
-          process.exit(0)
-        }
-        this._path.outDir = outDir
-      }
-
-      console.log()
-      const spinner = ora('Writing prod wrangler.toml...').start()
-      this._argv.config = path.resolve(this._path.outDir, `${this._argv.name}.wrangler.toml`)
-      fs.writeFileSync(this._argv.config, toml.stringify(omit(this._wranglerConfigParsed, 'outDir')))
-      spinner.text = green(`Write prod wrangler.toml success: ${dim(this._argv.config)}`)
-      spinner.succeed()
     }
 
     // Bumpp version
     await this.handlerRelease()
+    // Write wrangler.toml
+    this.writeWranglerToml()
     // Run command `wrangler publish`
     await this.runWrangler()
     // Run command `wrangler secret:bulk`
@@ -283,13 +269,9 @@ export class RunHandler {
   }
 
   protected async handlerRelease() {
-    console.log(cyan('\n# Start release...\n'))
+    if (this._argv.command === 'publish' && this._argv.release) {
+      console.log(cyan('\n# Start release...\n'))
 
-    // Bumpp version
-    if (!this._argv.release) {
-      console.log(yellow('Skip bump version'))
-    }
-    else {
       const bumppStr = 'npx bumpp package.json --no-tag --no-commit --no-push'
       console.log(`${green(`> ${bumppStr}`)}\n`)
       await this.exec(bumppStr)
@@ -304,17 +286,49 @@ export class RunHandler {
       }
 
       // Commit and push to github
-      const pkg = await import(this._path.package)
-      const commitStr = `git commit -m chore(${this._argv.name}):\\ release\\ v${pkg.version}`
+      this._pkg = (await import(this._path.package)).default
+      const commitStr = `git commit -m chore(${this._argv.name}):\\ release\\ v${this._pkg.version}`
       console.log(`${green(`> ${commitStr}`)}\n`)
       await this.exec(commitStr)
 
       console.log(`${green('> git push')}\n`)
       await this.exec('git push')
 
-      // Reprepare env
-      await this.prepareEnv()
+      // May be need to reexcute the dynamic secrets, e.g. `$(...)`
+      await this.resolveEnv()
+      await this.parseWranglerConfig()
     }
+  }
+
+  /** Write parsed wrangler config to wrangler.toml */
+  protected writeWranglerToml() {
+    console.log(cyan('\n# Write wrangler.toml...\n'))
+
+    const isPublish = this._argv.command === 'publish'
+    // Check the out directory
+    if (isPublish && this._argv.loader && this._wranglerConfigParsed.outDir) {
+      const outDir = path.resolve(this._path.root, this._wranglerConfigParsed.outDir)
+      if (!fs.existsSync(outDir)) {
+        console.log(red(`\`outDir\` ${outDir} does not exist`))
+        process.exit(0)
+      }
+      this._path.outDir = outDir
+      this._argv.config = path.resolve(this._path.outDir, `${this._argv.name}.wrangler.toml`)
+    }
+
+    const tomlWranglerConfig = toml.stringify(omit(this._wranglerConfigParsed, 'outDir'))
+    const tomlPath = (isPublish && this._argv.loader ? this._argv.config : this._path.wranglerTomlDev) as string
+    fs.writeFileSync(tomlPath, tomlWranglerConfig)
+    console.log(green(`Write wrangler.toml success: ${dim(tomlPath)}`))
+  }
+
+  protected async parseWranglerConfig() {
+    this._wranglerConfigParsed = await this._wranglerConfig({
+      env: this._envVarsInternal,
+      pkg: this._pkg,
+      execs: (str: string) => this.execs(str),
+      cwd: this._path.root,
+    })
   }
 
   protected async runWrangler(newArgv: any = {}) {
@@ -341,19 +355,51 @@ export class RunHandler {
     return await execa.execaCommand(command, Object.assign(
       {},
       { cwd: this._path.root, stdio: 'inherit' },
-      options),
-    )
+      options,
+    ))
+  }
+
+  protected execSync(command: string, options: ExecaSyncOptions = {}) {
+    return execa.execaCommandSync(command, Object.assign(
+      {},
+      { cwd: this._path.root, stdio: 'inherit' },
+      options,
+    ))
   }
 
   protected async execString(str: string) {
     const matches = str.match(/^\$\((.*?)\)$/)
     if (matches) {
       const { stdout, stderr } = await this.exec(matches[1], { stdio: 'pipe' })
-      if (stderr)
-        throw new Error(stderr)
+      if (stderr) {
+        console.log(red(stderr))
+        process.exit(0)
+      }
       return stdout
     }
     return str
+  }
+
+  protected execStringSync(str: string) {
+    const matches = str.match(/^\$\((.*?)\)$/)
+    if (matches) {
+      const { stdout, stderr } = this.execSync(matches[1], { stdio: 'pipe' })
+      if (stderr) {
+        console.log(red(stderr))
+        process.exit(0)
+      }
+      return stdout
+    }
+    return str
+  }
+
+  protected execs(str: string) {
+    const { stdout, stderr } = this.execSync(str, { stdio: 'pipe' })
+    if (stderr) {
+      console.log(red(stderr))
+      process.exit(0)
+    }
+    return stdout
   }
 }
 
