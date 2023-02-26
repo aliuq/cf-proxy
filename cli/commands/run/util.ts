@@ -291,7 +291,7 @@ export class RunHandler {
       console.log(yellow('Skip bump version'))
     }
     else {
-      const bumppStr = 'npx bumpp package.json --no-tag --commit false --push false'
+      const bumppStr = 'npx bumpp package.json --no-tag --no-commit --no-push'
       console.log(`${green(`> ${bumppStr}`)}\n`)
       await this.exec(bumppStr)
 
