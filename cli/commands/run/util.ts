@@ -298,7 +298,7 @@ export class RunHandler {
       if (this._argv.loader) {
         // Add dist to git
         console.log(`${green('> git add dist')}\n`)
-        await this.exec('git add dist')
+        await this.exec('git add package.json dist')
       }
 
       // Commit and push to github
