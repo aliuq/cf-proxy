@@ -218,11 +218,15 @@ export class RunHandler {
     await this.prepareEnv()
 
     if (this._argv.loader) {
+      console.log(cyan('\n# Build with tsup...\n'))
+
       // Check tsup configuration file
       if (!fs.existsSync(this._path.tsup)) {
         console.log(red(`tsup.config.ts does not exist in ${this._path.root}`))
         process.exit(0)
       }
+
+      await this.exec('tsup')
 
       // Check the out directory
       if (this._wranglerConfigParsed.outDir) {
@@ -233,10 +237,6 @@ export class RunHandler {
         }
         this._path.outDir = outDir
       }
-
-      console.log(cyan('\n# Build with tsup...\n'))
-
-      await this.exec('tsup')
 
       console.log()
       const spinner = ora('Writing prod wrangler.toml...').start()
