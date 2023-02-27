@@ -27,6 +27,15 @@ pnpm cf run -h
 ### 创建 - new
 
 ```bash
+# 使用默认模板
+pnpm cf new [name]
+# 进入交互模式选择模板
+pnpm cf new [name] --no-t
+```
+
+详细参数[参考](cli/commands/new/options.ts)
+
+```bash
 cf new [name] [destination]
 
 Create a new Cloudflare Workers project
@@ -44,6 +53,15 @@ Options:
 ```
 
 ### 管理 - run
+
+```bash
+# 进入交互模式
+pnpm cf run
+# 指定相关参数
+pnpm cf run [name] [command] -e [env mode]
+```
+
+详细参数[参考](cli/commands/run/options.ts)
 
 ```bash
 cf run [name] [command] [params]
