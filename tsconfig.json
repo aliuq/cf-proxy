@@ -24,22 +24,16 @@
     "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@cli/*": ["./cli/*"]
+      "@cli/*": ["./cli/*"],
+      "@root": ["./types.d.ts"]
     }
   },
-  "include": [
-    "cli",
-    "pages",
-    "workers",
-    "templates",
-    "types.d.ts"
-  ],
   "exclude": [
     "node_modules",
     "dist",
-    "pages/*/functions/**/*",
-    "pages/*/.nuxt/**/*",
-    "pages/*/.output/**/*"
+    "pages/*/functions*",
+    "pages/*/.nuxt*",
+    "pages/*/.output*"
   ]
 }
 

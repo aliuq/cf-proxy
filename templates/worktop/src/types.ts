@@ -2,7 +2,10 @@ import type * as worktop from 'worktop'
 
 export interface Context extends worktop.Context {
   bindings: {
-    FALLBACK: string
+    /** Current short commit hash of package.json */
+    GIT_HASH: string
+    /** Current version of package.json */
+    VERSION: string
   }
 }
 

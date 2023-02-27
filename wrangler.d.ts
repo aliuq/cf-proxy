@@ -1,5 +1,3 @@
-/// <reference types="wrangler" />
-
 /**
  * The possible types for a `Rule`.
  */
@@ -516,4 +514,11 @@ declare interface WranglerConfig extends Partial<Environment> {
   dev?: LocalDevelopmentSettings;
   env: Record<string, Partial<Environment>>;
   outDir?: string;
+}
+
+declare interface WranglerConfigOptions<T extends {} = {}> {
+  env: T
+  cwd: string
+  pkg: Record<string, any>
+  execs: (str: string) => string
 }
