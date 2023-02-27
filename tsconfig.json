@@ -22,10 +22,9 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
+    "baseUrl": ".",
     "paths": {
-      "@cli/*": [
-        "./cli/*"
-      ]
+      "@cli/*": ["./cli/*"]
     }
   },
   "include": [
@@ -33,15 +32,14 @@
     "pages",
     "workers",
     "templates",
-    "src/**/*",
     "types.d.ts"
   ],
   "exclude": [
-    "**/dist/**/*",
-    "**/node_modules/**/*",
-    "**/functions/**/*",
-    "**/pages/*/.nuxt/**/*",
-    "**/pages/*/.output/**/*"
+    "node_modules",
+    "dist",
+    "pages/*/functions/**/*",
+    "pages/*/.nuxt/**/*",
+    "pages/*/.output/**/*"
   ]
 }
 
