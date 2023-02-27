@@ -1,52 +1,69 @@
 # cf-proxy
 
-管理发布多个 cloudflare workers 的仓库
+管理发布 cloudflare workers
+
+## 要求
+
+- [pnpm](https://pnpm.io/zh/installation)
+- nodejs >= 16.13.0
+- wrangler >= 2.0.0
 
 ## 使用方法
 
-要求：
-
-+ [pnpm](https://pnpm.io/zh/installation)
-+ nodejs >= 16.13.0
-
 ```bash
-# clone this repo
 git clone https://github.com/aliuq/cf-proxy.git
+cd cf-proxy
+pnpm i
 ```
 
-### 命令 `new`
-
-创建新的 worker
+查看帮助
 
 ```bash
-pnpm run new [worker name]
+pnpm cf -h
+pnpm cf new -h
+pnpm cf run -h
 ```
 
-options:
-
-+ `--name/-n`：worker 名称
-+ `--date/-d`: `yyyy-mm-dd` 格式的日期，用于确定使用哪个版本的 Workers 运行时，默认为当前日期
-+ `--dest/-o`: worker 生成目录，默认为 `./workers`
-
-### 命令 `exec`
-
-管理 worker
+### 创建 - new
 
 ```bash
-pnpm run exec [worker name] [command] [params] [args]
+cf new [name] [destination]
+
+Create a new Cloudflare Workers project
+
+Positionals:
+  name, n         Name of the worker                                    [string]
+  destination, o  Destination of the worker        [string] [default: "workers"]
+  template, t     Template of the worker             [string] [default: "basic"]
+
+Options:
+      --version  Show version number                                   [boolean]
+  -d, --date     Date of compatibility_date     [string] [default: "2023-02-27"]
+  -w, --cwd      Current templates directory     [string] [default: "templates"]
+  -h, --help     Show help                                             [boolean]
 ```
 
-options:
+### 管理 - run
 
-+ `--config/-c`: 配置文件路径
-+ `--env/-e`: 环境变量文件路径
-+ `--help/-h`: 帮助信息
-+ `--version/-v`: 版本信息
-+ `--params`：固定参数
-+ `--workers-root`: worker 生成目录，默认为 `./workers`
-+ `--unbuild`: 使用 unbuild 编译 worker，默认为 `true`
-+ `--push`: 是否推送到 github，默认为 `false`
-+ `--[Name]`: 额外的 wrangler 命令参数
+```bash
+cf run [name] [command] [params]
+
+Run a Cloudflare Workers project
+
+Positionals:
+  name, n     Name of the worker                                        [string]
+  command, c  Command to run                                            [string]
+  env, e      Environment to use for operations and .env files          [string]
+
+Options:
+      --version  Show version number                                   [boolean]
+  -p, --params   Parameters to pass to the command                      [string]
+  -w, --cwd      Workers directory path            [string] [default: "workers"]
+  -f, --config   Path to the wrangler.toml file                         [string]
+  -r, --release  Release the worker to Github after running the command[boolean]
+      --loader   Loader to build for the worker       [string] [default: "tsup"]
+  -h, --help     Show help                                             [boolean]
+```
 
 ## License
 
