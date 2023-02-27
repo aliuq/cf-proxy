@@ -24,10 +24,16 @@
     "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@cli/*": ["./cli/*"],
-      "@root": ["./types.d.ts"]
+      "@cli/*": ["./cli/*"]
     }
   },
+  "include": [
+    "cli",
+    "templates",
+    "workers",
+    "pages",
+    "types.d.ts"
+  ],
   "exclude": [
     "node_modules",
     "dist",

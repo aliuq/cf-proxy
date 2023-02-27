@@ -1,8 +1,0 @@
-{
-  "extends": "../../tsconfig.json",
-  "include": [
-    "src",
-    "types.d.ts",
-    "wrangler.config.ts"
-  ]
-}
