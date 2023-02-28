@@ -7,6 +7,7 @@ export default defineConfig({
   clean: true,
   minify: false,
   external: [],
+  sourcemap: true,
   outExtension({ format }) {
     return {
       js: format === 'esm'
