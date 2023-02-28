@@ -3,7 +3,7 @@ import getPort, { portNumbers } from 'get-port'
 import tsupConfig from './tsup.config'
 
 async function wranglerConfig(options: WranglerConfigOptions<INTERNAL_ENV>): Promise<WranglerConfig> {
-  const isDev = process.env.NODE_ENV === 'dev'
+  const isDev = process.env.CF_ENV === 'dev'
   const isPublish = process.env.CF_ENV === 'publish'
 
   const { pkg, execs } = options
