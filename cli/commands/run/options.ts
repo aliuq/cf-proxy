@@ -11,6 +11,7 @@ export interface RunOptions {
   config?: string
   release?: boolean
   loader?: string | false
+  dryRun?: boolean
   [x: string]: any
 }
 
@@ -79,5 +80,11 @@ export const options: CommandOptions<RunOptions> = {
     type: 'string',
     default: 'tsup',
     describe: 'Loader to build for the worker',
+  },
+  dryRun: {
+    boolean: true,
+    type: 'boolean',
+    default: false,
+    describe: 'Dry run the command',
   },
 }

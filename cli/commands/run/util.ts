@@ -47,7 +47,7 @@ export class RunHandler {
     await this.prepare()
 
     process.env.CF_ENV = this._argv.command
-    process.env.CF_LOADER = this._argv.loader || undefined
+    process.env.CF_LOADER = this._argv.loader || ''
 
     if (this._argv.command.startsWith('pkg:')) {
       await this.exec(`pnpm run ${this._argv.command.slice(4)}`)
@@ -153,7 +153,7 @@ export class RunHandler {
     spinner2.text = green('Parsed wrangler.config.ts success')
 
     const envs = Object.keys(this._wranglerConfigParsed.env)
-    spinner2.text = green(`Found ${envs.length} environment modes in wrangler.config.ts, including ${dim(envs.join(', '))}`)
+    spinner2.text = green(`Found ${envs.length} environment modes in wrangler.config.ts: ${dim(envs.join(', '))}`)
     spinner2.succeed()
 
     if (this._argv.env && !envs.includes(this._argv.env)) {
@@ -171,7 +171,7 @@ export class RunHandler {
       for (const [key, value] of Object.entries(this._env)) {
         const newValue = typeof value === 'string' ? await this.execString(value) : value
         if (key.startsWith('__') && key.endsWith('__'))
-          envVarsInternal[key] = newValue
+          envVarsInternal[key.replace(/__(.*?)__/, '$1')] = newValue
         else
           envVars[key] = newValue
       }
@@ -197,8 +197,7 @@ export class RunHandler {
 
   protected async handlerDev() {
     await this.prepareEnv()
-
-    this.writeWranglerToml()
+    await this.writeWranglerToml()
 
     // Write env vars to .dev.vars
     if (Object.keys(this._envVars).length) {
@@ -215,7 +214,7 @@ export class RunHandler {
   }
 
   protected async handlerPublish() {
-    await this.confirm()
+    !this._argv.dryRun && await this.confirm()
     await this.prepareEnv()
 
     if (this._argv.loader) {
@@ -231,13 +230,21 @@ export class RunHandler {
     }
 
     // Bumpp version
-    await this.handlerRelease()
+    !this._argv.dryRun && await this.handlerRelease()
     // Write wrangler.toml
-    this.writeWranglerToml()
+    await this.writeWranglerToml()
+    // If not set `--dry-run` or set `--dry-run` and not set `--loader`
     // Run command `wrangler publish`
-    await this.runWrangler()
+    if ((!this._argv.dryRun) || (this._argv.dryRun && !this._argv.loader)) {
+      // Running in wrangler default `--dry-run`
+      // Set a default value for `--outdir`
+      if (this._argv.dryRun && !this._argv.loader && !this._argv.outdir)
+        this._argv.outdir = this._path.outDir
+
+      await this.runWrangler()
+    }
     // Run command `wrangler secret:bulk`
-    await this.handlerSecretBulk()
+    !this._argv.dryRun && await this.handlerSecretBulk()
   }
 
   protected async handlerDelete() {
@@ -301,34 +308,52 @@ export class RunHandler {
   }
 
   /** Write parsed wrangler config to wrangler.toml */
-  protected writeWranglerToml() {
+  protected async writeWranglerToml() {
     console.log(cyan('\n# Write wrangler.toml...\n'))
 
     const isPublish = this._argv.command === 'publish'
+    let tomlPath = this._path.wranglerTomlDev
     // Check the out directory
-    if (isPublish && this._argv.loader && this._wranglerConfigParsed.outDir) {
+    if (isPublish && this._wranglerConfigParsed.outDir) {
       const outDir = path.resolve(this._path.root, this._wranglerConfigParsed.outDir)
       if (!fs.existsSync(outDir)) {
         console.log(red(`\`outDir\` ${outDir} does not exist`))
-        process.exit(0)
+        const answer = await inquirerPkg.prompt({
+          type: 'confirm',
+          name: 'create',
+          message: `Create it now?${dim(` (${outDir})`)}`,
+          default: false,
+        })
+        if (answer.create) {
+          fs.mkdirSync(outDir, { recursive: true })
+          console.log(green(`Create directory success: ${dim(outDir)}`))
+        }
+        else {
+          process.exit(0)
+        }
       }
       this._path.outDir = outDir
-      this._argv.config = path.resolve(this._path.outDir, `${this._argv.name}.wrangler.toml`)
+      // If not set `--loader`, will use the default wrangler.toml
+      if (this._argv.loader) {
+        const env = this._argv.env ? `.${this._argv.env}` : ''
+        this._argv.config = path.resolve(this._path.outDir, `${this._argv.name}${env}.wrangler.toml`)
+        tomlPath = this._argv.config
+      }
     }
 
     const tomlWranglerConfig = toml.stringify(omit(this._wranglerConfigParsed, 'outDir'))
-    const tomlPath = (isPublish && this._argv.loader ? this._argv.config : this._path.wranglerTomlDev) as string
     fs.writeFileSync(tomlPath, tomlWranglerConfig)
     console.log(green(`Write wrangler.toml success: ${dim(tomlPath)}`))
   }
 
   protected async parseWranglerConfig() {
-    this._wranglerConfigParsed = await this._wranglerConfig({
+    const parsed = await this._wranglerConfig({
       env: this._envVarsInternal,
       pkg: this._pkg,
       execs: (str: string) => this.execs(str),
       cwd: this._path.root,
     })
+    this._wranglerConfigParsed = deepRemoveUndefined(parsed)
   }
 
   protected async runWrangler(newArgv: any = {}) {
@@ -341,7 +366,7 @@ export class RunHandler {
       commandArr.push(argv.params)
 
     Object.entries(argv).forEach(([key, value]) => {
-      if (!disableKeys.includes(key) && key.length !== 1)
+      if (!disableKeys.includes(key) && key.length !== 1 && !key.match(/[A-Z]/))
         commandArr.push(`--${key}`, value)
     })
 
@@ -472,3 +497,16 @@ function logPretty(title: string, message: string, width = 30) {
   const output = `${title}${' '.repeat(messageWidth)} ${message}`
   return output
 }
+
+function deepRemoveUndefined<T = any>(obj: T): T {
+  if (typeof obj !== 'object' || obj === null)
+    return obj
+  const newObj = Array.isArray(obj) ? [] as any[] : {} as Record<string, any>
+  for (const key in obj) {
+    if (obj[key] === undefined)
+      continue
+    newObj[key] = deepRemoveUndefined(obj[key])
+  }
+  return newObj as T
+}
+
