@@ -46,7 +46,7 @@ export class RunHandler {
     await checkRequired()
     await this.prepare()
 
-    process.env.CF_ENV = this._argv.command
+    process.env.CF_CMD = this._argv.command
     process.env.CF_LOADER = this._argv.loader || ''
 
     if (this._argv.command.startsWith('pkg:')) {
@@ -162,6 +162,8 @@ export class RunHandler {
     }
     this._options.env.choices = [{ name: 'Empty', value: '' }, ...envs] as any
     this._argv = await inquirer(pick(this._options, ['env']), this._argv)
+    // Set env
+    process.env.CF_ENV = this._argv.env
   }
 
   protected async resolveEnv() {

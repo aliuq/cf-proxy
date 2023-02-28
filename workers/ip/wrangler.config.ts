@@ -3,12 +3,16 @@ import getPort, { portNumbers } from 'get-port'
 import tsupConfig from './tsup.config'
 
 async function wranglerConfig(options: WranglerConfigOptions<INTERNAL_ENV>): Promise<WranglerConfig> {
-  const isDev = process.env.CF_ENV === 'dev'
-  const isPublish = process.env.CF_ENV === 'publish'
+  const isDev = process.env.CF_CMD === 'dev'
+  const isPublish = process.env.CF_CMD === 'publish'
 
   const { env, pkg, execs } = options
 
   const port = isDev ? (await getPort({ port: portNumbers(8787, 8887) })) : 8787
+  const domain = {
+    local: `localhost:${port}`,
+    prod: env.DOMAIN,
+  }
   const tsup = tsupConfig as any
   const outDir = tsup?.outDir || 'dist'
 
@@ -38,25 +42,19 @@ async function wranglerConfig(options: WranglerConfigOptions<INTERNAL_ENV>): Pro
       // For local development, Do not pulish the enviroment to cloudflare.
       localhost: {
         vars,
-        // routes: [
-        //   { pattern: `foo.localhost:${port}`, zone_name: `localhost:${port}`, custom_domain: true },
-        // ],
+        route: { pattern: `ip.${domain.local}`, zone_name: domain.local, custom_domain: true },
       },
       preview: {
         vars,
-        routes: env.DOMAIN
-          ? [
-            { pattern: `ip-preview.${env.DOMAIN}`, zone_name: env.DOMAIN, custom_domain: true },
-          ]
+        route: domain.prod
+          ? { pattern: `ip-preview.${domain.prod}`, zone_name: domain.prod, custom_domain: true }
           : undefined,
       },
       production: {
         vars,
-        // routes: env.DOMAIN
-        //   ? [
-        //     { pattern: `demo.${env.DOMAIN}`, zone_name: env.DOMAIN, custom_domain: true },
-        //   ]
-        //   : undefined,
+        route: domain.prod
+          ? { pattern: `ip.${domain.prod}`, zone_name: domain.prod, custom_domain: true }
+          : undefined,
       },
     },
     outDir: isPublish ? outDir : undefined,
