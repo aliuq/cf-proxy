@@ -84,7 +84,6 @@ export const options: CommandOptions<RunOptions> = {
   dryRun: {
     boolean: true,
     type: 'boolean',
-    default: false,
     describe: 'Dry run the command',
   },
 }
