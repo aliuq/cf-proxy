@@ -1,20 +1,19 @@
-import { getDomainAndSubdomain, needCancelRequest, replyText, replyUnsupport } from '../../utils'
+import { Router, compose } from 'worktop'
+import { reply } from 'worktop/response'
+import { start } from 'worktop/cfw'
+import type { Context } from './types'
+import * as Middleware from './middleware'
 
-export default {
-  async fetch(request: Request, env: ENV, _ctx: ExecutionContext): Promise<Response> {
-    const needCancel = await needCancelRequest(request)
-    if (needCancel)
-      return needCancel
+const API = new Router<Context>()
 
-    const url = new URL(request.url)
+API.prepare = compose(
+  Middleware.init(),
+)
 
-    if (url.pathname === '/robots.txt')
-      return replyText('User-agent: *\nDisallow: /', env)
+API.add('GET', '/', (req, _context) => {
+  return reply(200, req.headers.get('cf-connecting-ip'))
+})
 
-    const { subdomain } = getDomainAndSubdomain(request)
-    if (subdomain === 'ip' && url.pathname === '/')
-      return replyText(request.headers.get('cf-connecting-ip') as string, env)
+// Module Worker
+export default start(API.run)
 
-    return replyUnsupport(request, env)
-  },
-}
