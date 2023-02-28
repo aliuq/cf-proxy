@@ -3,8 +3,10 @@ import fs from 'fs'
 import path from 'path'
 import type { Argv, CommandModule } from 'yargs'
 import { inquirer } from '@cli/inquirer'
-import { bold, green, yellow } from '@cli/colors'
-import { getAllWorkers, pick, renderTemplate } from '@cli/utils'
+import { bold, green, red, yellow } from '@cli/colors'
+import { pick, recursiveWriteFile } from '@cli/utils'
+import fg from 'fast-glob'
+import handlebars from 'handlebars'
 import type { NewOptions } from './options'
 import { options } from './options'
 
@@ -22,7 +24,7 @@ const NewCommand: CommandModule<{}, NewOptions> = {
     argv = await inquirer(pick(options, 'name'), argv)
 
     // Template
-    const templates = getAllWorkers(argv.cwd)
+    const templates = getTemplates(argv.cwd)
     if (!templates.length) {
       console.log(yellow(`No template found in "${argv.cwd}", skipping...`))
       process.exit(0)
@@ -53,3 +55,41 @@ const NewCommand: CommandModule<{}, NewOptions> = {
 
 export default NewCommand
 
+function getTemplates(templateRoot: string) {
+  const templates = fs.readdirSync(templateRoot).filter((file) => {
+    return fs.statSync(`${templateRoot}/${file}`).isDirectory() && !file.match(/^__(.*?)__$/)
+  })
+  return templates
+}
+
+function renderTemplate(templateRoot: string, destRoot: string, answers: Object) {
+  try {
+    if (!fs.existsSync(templateRoot))
+      throw new Error(`template root: ${bold(templateRoot)} not exist`)
+
+    const dirs = [templateRoot]
+    // Check common configuration files
+    const commonFilesRoot = path.resolve(path.dirname(templateRoot), '__COMMON__')
+    fs.existsSync(commonFilesRoot) && dirs.push(commonFilesRoot)
+
+    // read all file names in templateRoot
+    const fileMaps = dirs.reduce((acc, dir) => {
+      acc[dir] = fg.sync('**/*', { dot: true, onlyFiles: true, cwd: dir })
+      return acc
+    }, {} as Record<string, string[]>)
+
+    Object.entries(fileMaps).forEach(([dir, files]) => {
+      files.forEach((fileName) => {
+        const filePath = path.resolve(dir, fileName)
+        const destFilePath = path.resolve(destRoot, fileName)
+        const templateContent: string = fs.readFileSync(filePath, 'utf-8')
+        const content = handlebars.compile(templateContent)(answers)
+        recursiveWriteFile(destFilePath, content, { encoding: 'utf-8' })
+      })
+    })
+  }
+  catch (error: any) {
+    console.log(red(error.message))
+    process.exit(0)
+  }
+}

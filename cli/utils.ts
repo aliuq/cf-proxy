@@ -1,7 +1,4 @@
 import fs from 'fs'
-import path from 'path'
-import handlebars from 'handlebars'
-import { bold, red } from './colors'
 
 /** Pick properties from an object.
  *
@@ -32,47 +29,35 @@ export function omit(obj: Record<string, any>, keys: string[] | string): Record<
   return result
 }
 
-/** render template file
- *
- * @param {string} templateRoot template root path
- * @param {string} destRoot destination root path
- * @param {Object} answers answers
- */
-export function renderTemplate(templateRoot: string, destRoot: string, answers: Object) {
-  try {
-    if (!fs.existsSync(templateRoot))
-      throw new Error(`template root: ${bold(templateRoot)} not exist`)
+export interface WriteFileOptions {
+  encoding?: BufferEncoding | null
+  mode?: number | string
+  flag?: string
+}
 
-    if (!fs.existsSync(destRoot))
-      fs.mkdirSync(destRoot)
+export function recursiveWriteFile(filePath: string, data: string | Buffer, options?: WriteFileOptions) {
+  // Split the file path into its individual parts
+  const parts = filePath.split('/')
 
-    // read all file names in templateRoot
-    const files = fs.readdirSync(templateRoot)
+  // Remove the file name from the end of the path
+  const fileName = parts.pop()
 
-    files.forEach((fileName) => {
-      const templatePath = path.resolve(templateRoot, fileName)
-      const destPath = path.resolve(destRoot, fileName)
-      // judge if file is folder
-      const isDir = fs.statSync(templatePath).isDirectory()
-      if (isDir) {
-      // clone recursively
-        renderTemplate(templatePath, destPath, answers)
-      }
-      else {
-      // read template file
-        const templateContent: string = fs.readFileSync(templatePath, 'utf-8')
-        const content = handlebars.compile(templateContent)(answers)
-
-        // write to dest file
-        fs.writeFileSync(destPath, content, 'utf-8')
-      }
-    })
+  // Recursively create each directory in the path
+  let currentPath = ''
+  for (const part of parts) {
+    currentPath += `${part}/`
+    try {
+      fs.mkdirSync(currentPath)
+    }
+    catch (error: any) {
+      // Ignore the error if the directory already exists
+      if (error.code !== 'EEXIST')
+        throw error
+    }
   }
-  catch (error: any) {
-    // eslint-disable-next-line no-console
-    console.log(red(error.message))
-    process.exit(0)
-  }
+
+  // Write the file to the final directory
+  fs.writeFileSync(`${currentPath}${fileName}`, data, options)
 }
 
 /** Compare two version numbers in the format of semver.
