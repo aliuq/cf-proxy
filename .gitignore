@@ -176,3 +176,5 @@ functions/
 output/
 pages/
 workers/chatgpt/
+
+*.map
