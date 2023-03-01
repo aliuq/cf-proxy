@@ -12,6 +12,7 @@ export interface RunOptions {
   release?: boolean
   loader?: string | false
   dryRun?: boolean
+  local?: boolean
   [x: string]: any
 }
 
@@ -85,5 +86,19 @@ export const options: CommandOptions<RunOptions> = {
     boolean: true,
     type: 'boolean',
     describe: 'Dry run the command',
+  },
+  local: {
+    boolean: true,
+    type: 'boolean',
+    describe: 'Run the command locally',
+    alias: 'l',
+    only: 'dev',
+  },
+  experimentalLocal: {
+    boolean: true,
+    type: 'boolean',
+    describe: 'Run the command experimental locally',
+    alias: 'L',
+    only: 'dev',
   },
 }

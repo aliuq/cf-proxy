@@ -6,7 +6,7 @@ import fuzzy from 'fuzzy'
 
 export type CommandOption<T extends Answers = Answers> = Options & {
   inquirer?: DistinctQuestion<T> | boolean
-  positional?: boolean
+  only?: string | string[]
 }
 
 export type CommandOptions<T extends string | {} = string> = Record<T extends string ? T : keyof T, CommandOption>

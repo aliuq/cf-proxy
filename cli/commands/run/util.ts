@@ -207,10 +207,6 @@ export class RunHandler {
       fs.writeFileSync(this._path.devVars, envVarsStr.join(os.EOL))
     }
 
-    // Set to run the preview of the Worker directly on your local machine
-    if (!('local' in this._argv))
-      this._argv.local = true
-
     // Run command `wrangler dev`
     await this.runWrangler()
   }
@@ -367,12 +363,24 @@ export class RunHandler {
     if (typeof argv.params === 'string' && argv.params)
       commandArr.push(argv.params)
 
-    Object.entries(argv).forEach(([key, value]) => {
-      if (!disableKeys.includes(key) && key.length !== 1 && !key.match(/[A-Z]/))
-        commandArr.push(`--${key}`, value)
-    })
+    for (const [key, value] of Object.entries(argv)) {
+      if (disableKeys.includes(key) || key.length === 1 || key.match(/[A-Z]/))
+        continue
+
+      if (typeof value === 'string' && value === '')
+        continue
+
+      const option = this._options[camelCase(key)] || this._options[kebabCase(key)]
+      const only = option?.only || []
+      const onlys = Array.isArray(only) ? only : [only]
+      if (onlys.length && !onlys.includes(this._argv.command))
+        continue
+
+      commandArr.push(`--${key}`, value)
+    }
 
     const commandStr = commandArr.join(' ')
+
     console.log(`${green(`> ${commandStr}`)}\n`)
 
     await this.exec(commandStr)
@@ -512,3 +520,28 @@ function deepRemoveUndefined<T = any>(obj: T): T {
   return newObj as T
 }
 
+/** Converts a kebab-case string to camelCase
+ *
+ * @param {string} str - The string to convert
+ * @returns {string} The converted string
+ *
+ * @example
+ *
+ * camelCase('foo-bar-baz') // 'fooBarBaz'
+ */
+function camelCase(str: string): string {
+  return str.replace(/-([a-z])/g, g => g[1].toUpperCase())
+}
+
+/** Converts a camelCase string to kebab-case
+ *
+ * @param {string} str - The string to convert
+ * @returns {string} The converted string
+ *
+ * @example
+ *
+ * kebabCase('fooBarBaz') // 'foo-bar-baz'
+ */
+function kebabCase(str: string): string {
+  return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
+}
