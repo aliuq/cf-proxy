@@ -23,7 +23,6 @@ export function getDomainAndSubdomain(request: Request): { domain: string; subdo
   return { domain, subdomain }
 }
 
-export type RenderData = Record<string, any>
 /** 渲染模板
  *
  * @param template 模板字符串
