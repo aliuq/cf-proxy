@@ -16,7 +16,6 @@ _inquirer.registerPrompt('autocomplete', inquirerPrompt)
 // 将 yargs 和 inquirer 结合起来
 export const inquirer = async (options: CommandOptions, argv: any) => {
   // Placeholder
-  // eslint-disable-next-line no-console
   const questions: QuestionCollection = Object.entries(options)
     .map(([key, value]) => generateQuestion(key, value, argv))
 
