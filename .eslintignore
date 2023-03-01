@@ -1,6 +1,7 @@
-example/
-.output/
-dist/
+example
+.output
+dist
 tailwindcss.css
-node_modules/
-pages/
+node_modules
+pages
+.temp
