@@ -1,161 +1,73 @@
-/**
- * Proxy list, e.g. `my.domain`
- *
- * | Proxy | Hostname |
- * |:---------|:---------|
- * | hub.my.domain | github.com |
- * | raw.my.domain | raw.githubusercontent.com |
- * | assets.my.domain | github.githubassets.com |
- * | download.my.domain | codeload.github.com |
- * | object.my.domain | objects.githubusercontent.com |
- * | media.my.domain | media.githubusercontent.com |
- * | gist.my.domain | gist.github.com |
- */
+import { Router, compose } from 'worktop'
+import { reply } from 'worktop/response'
+import { start } from 'worktop/cfw'
+import type { Context } from './types'
+import * as Middleware from './middleware'
+import * as Proxy from './middleware/proxy'
 
-let domainMaps: Record<string, string> = {}
-let reverseDomainMaps: Record<string, string> = {}
-export default {
-  async fetch(request: Request, env: ENV, _ctx: ExecutionContext): Promise<Response> {
-    const needCancel = await needCancelRequest(request)
-    if (needCancel)
-      return new Response('', { status: 204 })
+const API = new Router<Context>()
 
-    const url = new URL(request.url)
-    const { domain, subdomain } = getDomainAndSubdomain(request)
+API.prepare = compose(
+  Middleware.init({
+    disablePaths: ['/login', '/join', '/session', '/auth', '/signup'],
+  }),
+  Proxy.create,
+)
 
-    if (url.pathname === '/robots.txt')
-      return new Response('User-agent: *\nDisallow: /', { status: 200 })
+API.add('GET', '*', (req, context) => {
+  const prefix = context.bindings.PREFIX ? `-${context.bindings.PREFIX}` : ''
+  const domainMaps = {
+    [`hub${prefix}.${context.domain}`]: 'github.com',
+    [`assets${prefix}.${context.domain}`]: 'github.githubassets.com',
+    [`raw${prefix}.${context.domain}`]: 'raw.githubusercontent.com',
+    [`download${prefix}.${context.domain}`]: 'codeload.github.com',
+    [`object${prefix}.${context.domain}`]: 'objects.githubusercontent.com',
+    [`media${prefix}.${context.domain}`]: 'media.githubusercontent.com',
+    [`avatars${prefix}.${context.domain}`]: 'avatars.githubusercontent.com',
+    [`gist${prefix}.${context.domain}`]: 'gist.github.com',
+  }
+  const reverseDomainMaps = Object.fromEntries(Object.entries(domainMaps).map(arr => arr.reverse()))
 
-    // ============ 逻辑处理 ============
-    //
-    //
-    domainMaps = {
-      [`hub.${domain}`]: 'github.com',
-      [`assets.${domain}`]: 'github.githubassets.com',
-      [`raw.${domain}`]: 'raw.githubusercontent.com',
-      [`download.${domain}`]: 'codeload.github.com',
-      [`object.${domain}`]: 'objects.githubusercontent.com',
-      [`media.${domain}`]: 'media.githubusercontent.com',
-      [`avatars.${domain}`]: 'avatars.githubusercontent.com',
-      [`gist.${domain}`]: 'gist.github.com',
-    }
-    reverseDomainMaps = Object.fromEntries(Object.entries(domainMaps).map(arr => arr.reverse()))
+  const url: URL = new URL(req.url)
+  if (url.host in domainMaps) {
+    url.host = domainMaps[url.host]
+    if (url.port !== '80' && url.port !== '443')
+      url.port = url.protocol === 'https:' ? '443' : '80'
 
-    if (url.host in domainMaps) {
-      url.host = domainMaps[url.host]
-      if (url.port !== '80' && url.port !== '443')
-        url.port = url.protocol === 'https:' ? '443' : '80'
+    return context.$proxy.run(url, req, {
+      updateLocation(location) {
+        const locUrl = new URL(location)
+        if (locUrl.host in reverseDomainMaps) {
+          locUrl.host = reverseDomainMaps[locUrl.host]
+          return locUrl.toString()
+        }
+        return location
+      },
+      async updatePostResponse(response, newHeaders) {
+        if (newHeaders.get('content-type')?.includes('text/html')) {
+          const body = await response.text()
+          const regAll = new RegExp(Object.keys(reverseDomainMaps)
+            .map((r: string) => `(https?://${r})`)
+            .join('|'), 'g')
 
-      const newRequest = getNewRequest(url, request)
-      return proxy(url, newRequest, env)
-    }
+          const newBody = body
+            // Replace all hostname to proxy domain
+            .replace(regAll, (match) => {
+              return match.replace(/^(https?:\/\/)(.*?)$/g, (m, p1, p2) => {
+                return reverseDomainMaps[p2] ? `${p1}${reverseDomainMaps[p2]}` : m
+              })
+            })
+            // Avoid integrity error
+            .replace(/integrity=\".*?\"/g, '')
 
-    return new Response(`Unsupported domain ${subdomain ? `${subdomain}.` : ''}${domain}`, {
-      status: 200,
-      headers: { 'content-type': 'text/plain;charset=utf-8', 'git-hash': env.GIT_HASH },
+          newHeaders.set('content-length', newBody.length.toString())
+          return new Response(newBody, { status: response.status, headers: newHeaders })
+        }
+      },
     })
-  },
-}
-
-/** Get domain and subdomain from request url
- */
-function getDomainAndSubdomain(request: Request): { domain: string; subdomain: string } {
-  const url = new URL(request.url)
-  const hostArr = url.host.split('.')
-  let subdomain = ''
-  let domain = ''
-  if (hostArr.length > 2) {
-    subdomain = hostArr[0]
-    domain = hostArr.slice(1).join('.')
   }
-  else if (hostArr.length === 2) {
-    subdomain = hostArr[1].match(/^localhost(:\d+)?$/) ? hostArr[0] : ''
-    domain = hostArr[1].match(/^localhost(:\d+)?$/) ? hostArr[1] : hostArr.join('.')
-  }
-  else {
-    domain = hostArr.join('.')
-  }
-  return { domain, subdomain }
-}
 
-/** 需要终止请求
- * @param request
- * @returns true: 需要终止请求
- */
-async function needCancelRequest(request: Request, matches: string[] = []): Promise<boolean> {
-  const url = new URL(request.url)
-  matches = matches.length
-    ? matches
-    : [
-      '/favicon.',
-      '/sw.js',
-      '/login',
-      '/join',
-      '/session',
-      '/auth',
-    ]
-  return matches.some(match => url.pathname.includes(match))
-}
+  return reply(404, 'Not Found')
+})
 
-/** 生成新的 request
- */
-function getNewRequest(url: URL, request: Request) {
-  const headers = new Headers(request.headers)
-  headers.set('reason', 'mirror of China')
-  const newRequestInit: RequestInit = { redirect: 'manual', headers }
-  return new Request(url.toString(), new Request(request, newRequestInit))
-}
-
-/** 代理转发处理
- */
-async function proxy(url: URL, request: Request, _env: ENV) {
-  try {
-    const res = await fetch(url.toString(), request)
-    const headers = res.headers
-    const newHeaders = new Headers(headers)
-    const status = res.status
-
-    if (newHeaders.has('location')) {
-      const loc = newHeaders.get('location')
-      if (loc) {
-        try {
-          const locUrl = new URL(loc)
-          if (locUrl.host in reverseDomainMaps) {
-            locUrl.host = reverseDomainMaps[locUrl.host]
-            newHeaders.set('location', locUrl.toString())
-          }
-        }
-        catch (e) {
-          console.error(e)
-        }
-      }
-    }
-
-    newHeaders.set('access-control-expose-headers', '*')
-    newHeaders.set('access-control-allow-origin', '*')
-
-    newHeaders.delete('content-security-policy')
-    newHeaders.delete('content-security-policy-report-only')
-    newHeaders.delete('clear-site-data')
-
-    if (res.headers.get('content-type')?.indexOf('text/html') !== -1) {
-      const body = await res.text()
-      const regAll = new RegExp(Object.keys(reverseDomainMaps).map((r: string) => `(https?://${r})`).join('|'), 'g')
-      const newBody = body
-      // Replace all hostname to proxy domain
-        .replace(regAll, (match) => {
-          return match.replace(/^(https?:\/\/)(.*?)$/g, (m, p1, p2) => {
-            return reverseDomainMaps[p2] ? `${p1}${reverseDomainMaps[p2]}` : m
-          })
-        })
-      // Avoid integrity error
-        .replace(/integrity=\".*?\"/g, '')
-
-      return new Response(newBody, { status, headers: newHeaders })
-    }
-    return new Response(res.body, { status, headers: newHeaders })
-  }
-  catch (e: any) {
-    return new Response(e.message, { status: 500 })
-  }
-}
+export default start(API.run)

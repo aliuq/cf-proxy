@@ -1,8 +1,8 @@
 {
   "name": "cf-workers-github",
   "type": "module",
-  "version": "0.0.1",
-  "description": "github is a cloudflare worker",
+  "version": "0.0.0",
+  "description": "Simple cloudflare worker github",
   "author": "AliuQ <aliuq@bilishare.com>",
   "license": "MIT",
   "homepage": "https://github.com/aliuq/cf-proxy/tree/master/workers/github#readme",
@@ -16,6 +16,6 @@
   ],
   "main": "dist/index.mjs",
   "scripts": {
-    "dev": "wrangler dev -l"
+    "build": "tsup"
   }
 }
