@@ -1,59 +1,63 @@
-// 这里处理 wrangler 的配置文件
-//
 import path from 'path'
-import * as execa from 'execa'
 import getPort, { portNumbers } from 'get-port'
-import type { BuildEntry } from 'unbuild'
+import tsupConfig from './tsup.config'
 
-async function wranglerConfig({ unbuild: useUnbuild, env }: Options = { unbuild: false, env: {} }) {
-  const port = await getPort({ port: portNumbers(8787, 8887) })
+async function wranglerConfig(options: WranglerConfigOptions<INTERNAL_ENV>): Promise<WranglerConfig> {
+  const isDev = process.env.CF_CMD === 'dev'
+  const isPublish = process.env.CF_CMD === 'publish'
 
-  const { default: buildConfig } = await import('./build.config')
-  const outDir = buildConfig.outDir || 'dist'
+  const { env, pkg, execs } = options
 
-  const entrie = (<(string | BuildEntry)[]>buildConfig.entries)[0]
-  const nameFull = typeof entrie === 'string' ? entrie : entrie.input
-  const outName = path.basename(nameFull)
+  const port = isDev ? (await getPort({ port: portNumbers(8787, 8887) })) : 8787
+  const domain = {
+    local: `localhost:${port}`,
+    prod: env.DOMAIN,
+  }
+  const tsup = tsupConfig as any
+  const outDir = tsup?.outDir || 'dist'
 
-  const gitHash = execa.execaCommandSync('git rev-parse --short HEAD').stdout
+  /**
+   * @example
+   * entries: ['src/index.ts'] => nameFull: 'src/index'; outName: 'index'
+   * entries: { input: 'src/index.ts' } => nameFull: 'src/index'; outName: 'index'
+   *
+   * main: isPublish ? `worker.mjs` : `src/worker.ts`
+   *
+   */
+  const entry = Array.isArray(tsup.entry) ? tsup.entry[0] : tsup.entry[Object.keys(tsup.entry)[0]]
+  const outName = path.basename(entry, path.extname(entry))
+
+  const vars = {
+    GIT_HASH: execs('git --no-pager log -1 --format=%h -- package.json'),
+    VERSION: `v${pkg.version}`,
+  }
 
   return {
     name: 'proxy',
-    main: useUnbuild ? `${outName}.mjs` : `${nameFull}.ts`,
-    compatibility_date: new Date().toISOString().split('T')[0],
-    no_bundle: useUnbuild ? true : undefined,
-    vars: {
-      GIT_HASH: gitHash,
-    },
-    dev: {
-      ip: 'localhost',
-      // local_protocol: 'https',
-      port,
-    },
+    main: isPublish && process.env.CF_LOADER ? `${outName}.mjs` : entry,
+    compatibility_date: '2023-02-28',
+    vars,
+    dev: { ip: 'localhost', port },
     env: {
       // For local development, Do not pulish the enviroment to cloudflare.
       localhost: {
-        vars: {
-          mode: 'localhost',
-          GIT_HASH: gitHash,
-        },
-        routes: [
-          { pattern: `dl.localhost:${port}`, zone_name: `localhost:${port}`, custom_domain: true },
-        ],
+        vars,
+        route: { pattern: `${domain.local}`, zone_name: domain.local, custom_domain: true },
+      },
+      preview: {
+        vars,
+        route: domain.prod
+          ? { pattern: `dl-preview.${domain.prod}`, zone_name: domain.prod, custom_domain: true }
+          : undefined,
       },
       production: {
-        vars: {
-          mode: 'production',
-          GIT_HASH: gitHash,
-        },
-        routes: env.DOMAIN
-          ? [
-            { pattern: `dl.${env.DOMAIN}`, zone_name: env.DOMAIN, custom_domain: true },
-          ]
+        vars,
+        route: domain.prod
+          ? { pattern: `dl.${domain.prod}`, zone_name: domain.prod, custom_domain: true }
           : undefined,
       },
     },
-    outDir: useUnbuild ? outDir : undefined,
+    outDir: isPublish ? outDir : undefined,
   }
 }
 

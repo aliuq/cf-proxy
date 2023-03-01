@@ -1,9 +1,18 @@
 # Worker: proxy
 
-常规代理请求
+## 使用
 
-示例地址：[https://dl.llll.host](https://dl.llll.host)
+```bash
+# 开发
+pnpm cf run proxy dev --env localhost
+# 部署
+pnpm cf run proxy publish --env production
+```
 
 ## 环境变量
 
-+ `__DOMAIN__`: 主域名，用于配置路由、触发器等
+在 `.env` 文件中进行编辑，用于编译配置的环境变量以 `__` 开头和结尾，例如 `__DOMAIN__`，这样是为了区分和 `wrangler` 的环境变量
+
+| 环境变量 | 说明 |
+| :--- | :--- |
+| `__DOMAIN__` | 域名，用于配置路由 |
