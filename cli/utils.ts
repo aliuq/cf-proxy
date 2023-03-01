@@ -109,3 +109,16 @@ export function getAllWorkers(workersRoot: string) {
   })
   return workers
 }
+
+/** 渲染模板
+ *
+ * @param template 模板字符串
+ * @param data 渲染数据
+ */
+export function renderTemplate(template: string, data: Record<string, any>): string {
+  const pattern = /{{\s*(\w+)\s*}}/g
+
+  return template.replace(pattern, (_, key) => {
+    return data[key] !== undefined ? String(data[key]) : ''
+  })
+}

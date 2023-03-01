@@ -1,6 +1,5 @@
 import path from 'path'
 import fs from 'fs'
-import handlebars from 'handlebars'
 import * as execa from 'execa'
 
 // 遍历templateRoot目录下的所有文件，如果是文件夹，递归遍历，如果是文件，渲染模板，渲染模板时，使用answers作为模板数据，渲染后的文件，保存到destRoot目录下
@@ -26,7 +25,7 @@ export function renderTemplate(templateRoot: string, destRoot: string, answers: 
     else {
       // read template file
       const templateContent: string = fs.readFileSync(templatePath, 'utf-8')
-      const content = handlebars.compile(templateContent)(answers)
+      const content = render(templateContent, answers)
       // write to dest file
       fs.writeFileSync(destPath, content, 'utf-8')
     }
@@ -91,4 +90,17 @@ export async function execString(str: string, cwd?: string) {
     return stdout
   }
   return str
+}
+
+/** 渲染模板
+ *
+ * @param template 模板字符串
+ * @param data 渲染数据
+ */
+export function render(template: string, data: Record<string, any>): string {
+  const pattern = /{{\s*(\w+)\s*}}/g
+
+  return template.replace(pattern, (_, key) => {
+    return data[key] !== undefined ? String(data[key]) : ''
+  })
 }

@@ -4,9 +4,8 @@ import path from 'path'
 import type { Argv, CommandModule } from 'yargs'
 import { inquirer } from '@cli/inquirer'
 import { bold, green, red, yellow } from '@cli/colors'
-import { pick, recursiveWriteFile } from '@cli/utils'
+import { pick, recursiveWriteFile, renderTemplate as render } from '@cli/utils'
 import fg from 'fast-glob'
-import handlebars from 'handlebars'
 import type { NewOptions } from './options'
 import { options } from './options'
 
@@ -83,7 +82,7 @@ function renderTemplate(templateRoot: string, destRoot: string, answers: Object)
         const filePath = path.resolve(dir, fileName)
         const destFilePath = path.resolve(destRoot, fileName)
         const templateContent: string = fs.readFileSync(filePath, 'utf-8')
-        const content = handlebars.compile(templateContent)(answers)
+        const content = render(templateContent, answers)
         recursiveWriteFile(destFilePath, content, { encoding: 'utf-8' })
       })
     })
