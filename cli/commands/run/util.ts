@@ -348,7 +348,7 @@ export class RunHandler {
     const parsed = await this._wranglerConfig({
       env: this._envVarsInternal,
       pkg: this._pkg,
-      execs: (str: string) => this.execs(str),
+      execs: (str: string, isContinue?: boolean) => this.execs(str, isContinue),
       cwd: this._path.root,
     })
     this._wranglerConfigParsed = deepRemoveUndefined(parsed)
@@ -428,13 +428,19 @@ export class RunHandler {
     return str
   }
 
-  protected execs(str: string) {
-    const { stdout, stderr } = this.execSync(str, { stdio: 'pipe' })
-    if (stderr) {
-      console.log(red(stderr))
-      process.exit(0)
+  protected execs(str: string, isContinue?: boolean) {
+    try {
+      const { stdout, stderr } = this.execSync(str, { stdio: 'pipe' })
+      if (stderr && !isContinue) {
+        console.log(red(stderr))
+        process.exit(0)
+      }
+      return stdout
     }
-    return stdout
+    catch (err: any) {
+      console.log(`\n${red(err)}`)
+      !isContinue && process.exit(0)
+    }
   }
 }
 
