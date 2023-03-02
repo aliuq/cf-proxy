@@ -3,7 +3,7 @@
 通过 Cloudflare Workers 代理 GitHub 的请求来实现 Github 无法访问的问题，支持文件代理加速下载
 
 > **Note**  
-> 无法保证 `hub.llll.host` 持续可用，建议自行部署
+> 无法保证 `hub.llll.host` 持续可用，建议自行部署  
 > 为了防止被意外认定为网络欺诈，而导致域名被封，已屏蔽掉 login, session, join, auth 等接口，如果有需要，请自行部署，将这些接口放开
 
 ## 使用
@@ -101,7 +101,34 @@ pnpm cf run github publish --env production
 
 ## 部署
 
-TODO
+前提条件
+
++ 一个[Clourflare 账号](https://dash.cloudflare.com/login)
+
+### 手动部署
+
+1. 复制 dist 目录下面的文件[dist/index.mjs](dist/index.mjs)
+2. 进入 cloudflare 控制台, `https://dash.cloudflare.com/<帐户 ID>/workers/overview`
+3. 创建服务 - 点击确定(创建服务)按钮 - 快速编辑 - 将复制好的文件替换掉默认的内容 - 点击保存并部署按钮
+4. 返回 - 选择触发器 - 添加自定义域，将详细代理列表中的 Proxy 域名全部添加，例如 `hub.<Your Domain>`，点击保存
+5. 然后测试 `hub.<Your Domain>` 能否正常访问
+
+### Wrangler 部署
+
+```bash
+# 克隆仓库
+git clone https://github.com/aliuq/cf-proxy.git
+# 安装依赖
+pnpm i
+# 添加环境变量
+echo "__DOMAIN__=<Your Domain>" > workers/github/.env
+# 测试部署产物，查看命令运行过程中是否有报错
+pnpm cf run github publish --env production --dry-run
+# 测试无误后，正式部署，这一步需要验证用户登录，如果没有登录，会自动跳转到登录页面
+pnpm cf run github publish --env production
+```
+
+如果不喜欢在本地操作，也可以使用 GitHub Workspace 或 Stackblitz 等在线服务进行部署，这样的一个好处是不用在本地操作，也不用担心本地环境的问题，但可能遇到其他问题
 
 + [手把手实现 Github 代理加速](https://www.bilishare.com/tech/2022/08/23/cf-proxy-github.html)
 
