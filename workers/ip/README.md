@@ -1,5 +1,9 @@
 # Worker: ip
 
+获取公网 IP 地址
+
+示例地址：[https://ip.llll.host](https://ip.llll.host)
+
 ## 使用
 
 ```bash

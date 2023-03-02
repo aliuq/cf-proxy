@@ -59,9 +59,14 @@ Options:
 pnpm cf run
 # 指定相关参数
 pnpm cf run [name] [command] -e [env mode]
+# 查看输出结果
+pnpm cf run [name] [command] -e [env mode] --dry-run
 ```
 
 详细参数[参考](cli/commands/run/options.ts)
+
+> **Note**  
+> experimentalLocal 选项暂不可用
 
 ```bash
 cf run [name] [command] [params]
@@ -74,13 +79,18 @@ Positionals:
   env, e      Environment to use for operations and .env files          [string]
 
 Options:
-      --version  Show version number                                   [boolean]
-  -p, --params   Parameters to pass to the command                      [string]
-  -w, --cwd      Workers directory path            [string] [default: "workers"]
-  -f, --config   Path to the wrangler.toml file                         [string]
-  -r, --release  Release the worker to Github after running the command[boolean]
-      --loader   Loader to build for the worker       [string] [default: "tsup"]
-  -h, --help     Show help                                             [boolean]
+      --version            Show version number                         [boolean]
+  -p, --params             Parameters to pass to the command            [string]
+  -w, --cwd                Workers directory path  [string] [default: "workers"]
+  -f, --config             Path to the wrangler.toml file               [string]
+  -r, --release            Release the worker to Github after running the comman
+                           d                                           [boolean]
+      --loader             Loader to build for the worker
+                                                      [string] [default: "tsup"]
+      --dryRun             Dry run the command                         [boolean]
+  -l, --local              Run the command locally                     [boolean]
+  -L, --experimentalLocal  Run the command experimental locally        [boolean]
+  -h, --help               Show help                                   [boolean]
 ```
 
 ## License

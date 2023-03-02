@@ -1,5 +1,9 @@
 # Worker: proxy
 
+常规代理请求，仅转发单个文件有效，网站批量代理，需要根据这个模板进行更具体的替换
+
+示例地址：[https://dl.llll.host](https://dl.llll.host)
+
 ## 使用
 
 ```bash
