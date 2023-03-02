@@ -21,8 +21,8 @@ export const init = (options: InitOptions = {}): Handler => {
 
     // Set internal environment variables
     context.defer(async (res) => {
-      res.headers.set('X-hash', context.bindings.GIT_HASH)
-      res.headers.set('X-version', context.bindings.VERSION)
+      context.bindings.GIT_HASH && res.headers.set('X-hash', context.bindings.GIT_HASH)
+      context.bindings.VERSION && res.headers.set('X-version', context.bindings.VERSION)
     })
 
     // Generate disallow robots.txt
