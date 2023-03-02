@@ -49,7 +49,7 @@ async function wranglerConfig(options: WranglerConfigOptions<INTERNAL_ENV>): Pro
       preview: {
         vars,
         route: domain.prod
-          ? { pattern: `s-pre.${domain.prod}`, zone_name: domain.prod, custom_domain: true }
+          ? { pattern: `s-preview.${domain.prod}`, zone_name: domain.prod, custom_domain: true }
           : undefined,
         kv_namespaces: [
           { binding: env.KV_BINDING, id: env.KV_NAMESPACE_ID, preview_id: env.KV_PREVIEW_ID },

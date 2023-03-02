@@ -40,10 +40,7 @@ async function wranglerConfig(options: WranglerConfigOptions<INTERNAL_ENV>): Pro
     dev: { ip: 'localhost', port },
     env: {
       // For local development, Do not pulish the enviroment to cloudflare.
-      localhost: {
-        vars,
-        route: { pattern: `${domain.local}`, zone_name: domain.local, custom_domain: true },
-      },
+      localhost: { vars },
       preview: {
         vars,
         route: domain.prod
