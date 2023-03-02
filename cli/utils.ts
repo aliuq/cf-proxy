@@ -105,7 +105,6 @@ export function getAllWorkers(workersRoot: string) {
     const p = `${workersRoot}/${file}`
     return fs.statSync(p).isDirectory()
       && fs.existsSync(`${p}/package.json`)
-      && fs.existsSync(`${p}/wrangler.toml`)
   })
   return workers
 }
