@@ -16,9 +16,9 @@ wrangler kv:namespace create "SHORTURLS" --preview
 
 ```bash
 # 开发
-pnpm run exec short-domain dev --env localhost
+pnpm cf run short-domain dev --env localhost
 # 部署
-pnpm run exec short-domain publish --env production
+pnpm cf run short-domain publish --env production
 ```
 
 ## 环境变量

@@ -63,11 +63,13 @@
               :item="item"
               :data-index="index"
               :active="active"
-              :size-dependencies="[item.short,item.source]"
+              :size-dependencies="[item.id,item.source]"
             >
               <div class="w-20 table-td justify-center text-base px-0 select-none">{{ index + 1 }}</div>
-              <div class="flex-1 table-td max-w-300px" :title="item.short">{{ item.short }}</div>
-              <div class="flex-1 table-td overflow-hidden break-all" :title="item.source">{{ item.source }}</div>
+              <div class="flex-1 table-td max-w-300px" :title="item.id">{{ item.id }}</div>
+              <div class="flex-1 table-td overflow-hidden break-all" :title="item.source">
+                <a :href="item.source" target="_blank">{{ item.source }}</a>
+              </div>
               <div class="w-240px flex-shrink-0 table-td">
                 <el-button-group size="small">
                   <el-popconfirm title="确定删除吗?" confirm-button-text="确认" cancel-button-text="取消" @confirm="actions.delete(item, index)">
@@ -138,33 +140,49 @@
           }
           return data
         }
-    
+
+        const chunkArray = (arr, chunkSize) => {
+          return arr.reduce((chunks, el, i) => {
+            if (i % chunkSize === 0)
+              chunks.push([el])
+            else
+              chunks[chunks.length - 1].push(el)
+
+            return chunks
+          }, [])
+        }
+
         const isDark = useDark()
         const toggleDark = useToggle(isDark)
 
+        const listKeys = ref([])
         const sourceList = []
         const list = ref([])
-        const fetchAllDomains = async (cursor = '') => {
-          const res = await request('/api/list', { body: JSON.stringify({ cursor }) })
-          sourceList.push(...Object.assign([], res.data))
-          list.value.push(...res.data)
-          if (res.cursor)
-            await fetchAllDomains(res.cursor)
+        const getList = async () => {
+          const res = await request('/api/list')
+          listKeys.value = res.data
+
+          const chunked = chunkArray(listKeys.value, 500)
+          for await (const chunk of chunked) {
+            const res = await request('/api/list/detail', { body: JSON.stringify({ ids: chunk }) })
+            sourceList.push(...Object.assign([], res.data))
+            list.value.push(...res.data)
+          }
         }
 
         const filter = ref('')
         const onFilter = async () => {
-          list.value = sourceList.filter(item => item.source.includes(filter.value) || item.short.includes(filter.value))
+          list.value = sourceList.filter(item => item.source.includes(filter.value) || item.id.includes(filter.value))
         }
     
         const actions = {
           async delete(row, index) {
-            const data = await request('/api/delete', { body: JSON.stringify({ url: row.source }) })
+            const data = await request('/api/delete', { body: JSON.stringify({ id: row.id }) })
             if (data) {
-              const sourceIndex = sourceList.findIndex(item => item.short === row.short)
+              const sourceIndex = sourceList.findIndex(item => item.id === row.id)
               sourceList.splice(sourceIndex, 1)
               list.value.splice(index, 1)
-              ElMessage.success({ message: data.message })
+              ElMessage.success({ message: '删除成功' })
               if (list.value.length === 0) {
                 filter.value = ''
                 onFilter()
@@ -172,7 +190,7 @@
             }
           },
           copy: (row) => {
-            navigator.clipboard.writeText(row.short)
+            navigator.clipboard.writeText(new URL(row.id, location))
             ElMessage.success({ message: '复制成功' })
           },
           jump: (row) => {
@@ -180,7 +198,9 @@
           },
         }
 
-        onMounted(() => fetchAllDomains())
+        onMounted(() => {
+          getList()
+        })
 
         return { list, isDark, toggleDark, filter, onFilter, actions }
       },

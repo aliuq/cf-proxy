@@ -24,21 +24,25 @@
   <div id="app" v-cloak un-cloak>
     <div class="absolute top-4 right-4 flex justify-center">
       <el-icon v-if="isAuth" class="cursor-pointer mr-4" size="32" opacity="75 hover:100" i-carbon-user-admin @click="onJump('/admin')"></el-icon>
-      <el-icon class="cursor-pointer" size="32" opacity="75 hover:100" i="carbon-sun dark:carbon-moon" @click="toggleDark()"></el-icon>
+      <el-icon class="cursor-pointer mr-4" size="32" opacity="75 hover:100" i="carbon-sun dark:carbon-moon" @click="toggleDark()"></el-icon>
+      <a class="cursor-pointer text-8" opacity="75 hover:100" i="carbon-logo-github" href="https://github.com/aliuq/cf-proxy/tree/master/workers/short-domain" target="_blank"></a>
     </div>
 
     <main class="mx-auto md:max-w-800px md:my-50px">
       <div class="h-60px mb-4">
-        <h2 class="text-2xl font-bold text-$el-text-color-primary">添加短网址</h2>
+        <h2 class="text-2xl font-bold text-$el-text-color-primary">
+          添加短网址
+          <i class="text-lg select-none font-400 text-gray-300/50 ml-2px not-italic">{{ VERSION }}</i>
+        </h2>
         <p class="text-sm text-$el-text-color-secondary flex-center justify-start">添加成功或者url已经存在将会自动将短网址复制到剪贴板</p>
       </div>
 
       <el-form ref="ruleFormRef" :model="ruleForm" :rules="rules" size="large" label-position="top" label-width="120px" status-icon>
         <el-form-item label="ID" prop="id" v-if="isAuth">
-          <el-input v-model="ruleForm.id" resize="none" autocomplete="on" placeholder="支持自定义ID, 如: https://short.domain/abc" class="break-all"></el-input>
+          <el-input v-model="ruleForm.id" resize="none" autocomplete="on" placeholder="支持自定义ID, 如: https://example.com/abc 中的 abc" class="break-all"></el-input>
         </el-form-item>
         <el-form-item label="URL" prop="url">
-          <el-input v-model="ruleForm.url" type="textarea" :autosize="{ minRows: 3, maxRows: 20 }" resize="none" autocomplete="on" placeholder="输入URL, https://www.baidu.com" class="break-all"></el-input>
+          <el-input v-model="ruleForm.url" type="textarea" :autosize="{ minRows: 3, maxRows: 20 }" resize="none" autocomplete="on" placeholder="输入URL, https://www.example.com" class="break-all"></el-input>
         </el-form-item>
         <el-form-item>
           <div class="w-full flex justify-end">
@@ -46,9 +50,9 @@
           </div>
         </el-form-item>
 
-        <el-descriptions v-if="data.short && data.source" title="添加结果" :column="1" border class="mt-4" >
+        <el-descriptions v-if="data.id && data.source" title="添加结果" :column="1" border class="mt-4" >
           <el-descriptions-item label="短网址" class-name="break-all" label-class-name="w-20 select-none">
-            <el-button type="success" link class="!whitespace-normal !text-left !leading-6" @click="onCopy(data.short)">{{ data.short }}</el-button>
+            <el-button type="success" link class="!whitespace-normal !text-left !leading-6" @click="onCopy(data.id)">/{{ data.id }}</el-button>
           </el-descriptions-item>
           <el-descriptions-item label="原网址" class-name="break-all" label-class-name="w-20 select-none">
             <el-button type="success" link class="!whitespace-normal !text-left !leading-6" @click="onJump(data.source)">{{ data.source }}</el-button>
@@ -116,7 +120,7 @@
 
           const onCopy = async (text, showTips = true) => {
             if (navigator?.clipboard) {
-              await navigator.clipboard.writeText(text)
+              await navigator.clipboard.writeText(new URL(text, location))
             }
             else {
               const el = document.createElement('textarea')
@@ -176,7 +180,7 @@
                 ruleForm.url = ''
                 formEl.resetFields()
                 data.value = res.data
-                await onCopy(res.data.short, false)
+                await onCopy(res.data.id, false)
               }
             })
           }
