@@ -1,3 +1,4 @@
+import type { Method } from 'worktop'
 import { Router, compose } from 'worktop'
 import { reply } from 'worktop/response'
 import { start } from 'worktop/cfw'
@@ -14,24 +15,29 @@ API.prepare = compose(
   Proxy.create,
 )
 
-API.add('GET', '/', (req, context) => {
-  const url = new URL(req.url)
-  return reply(200,
-    renderTemplate(HomeHtml, {
-      url: url.origin,
-      version: context.bindings.VERSION,
-    }),
-    { 'content-type': 'text/html;charset=utf-8' },
-  )
-})
+// 常见的 HTTP 类型，参考：https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Methods
+const methods: Method[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']
 
-API.add('GET', '/*', async (req, context) => {
-  const newUrl = context.url.href
-    .replace(context.url.origin, '')
-    .substring(1)
-    .replace(/^(https?:)\/+/g, '$1//')
+methods.forEach((method: Method) => {
+  API.add(method, '/', (req, context) => {
+    const url = new URL(req.url)
+    return reply(200,
+      renderTemplate(HomeHtml, {
+        url: url.origin,
+        version: context.bindings.VERSION,
+      }),
+      { 'content-type': 'text/html;charset=utf-8' },
+    )
+  })
 
-  return context.$proxy.run(newUrl, req)
+  API.add('GET', '/*', async (req, context) => {
+    const newUrl = context.url.href
+      .replace(context.url.origin, '')
+      .substring(1)
+      .replace(/^(https?:)\/+/g, '$1//')
+
+    return context.$proxy.run(newUrl, req)
+  })
 })
 
 export default start(API.run)
