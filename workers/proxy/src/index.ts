@@ -30,7 +30,7 @@ methods.forEach((method: Method) => {
     )
   })
 
-  API.add('GET', '/*', async (req, context) => {
+  API.add(method, '/*', async (req, context) => {
     const newUrl = context.url.href
       .replace(context.url.origin, '')
       .substring(1)
