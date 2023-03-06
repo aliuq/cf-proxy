@@ -1,0 +1,21 @@
+{
+  "name": "cf-workers-proxy-no-ui",
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Simple cloudflare worker proxy",
+  "author": "AliuQ <aliuq@bilishare.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/aliuq/cf-proxy/tree/master/workers/proxy#readme",
+  "bugs": {
+    "url": "https://github.com/aliuq/cf-proxy/issues"
+  },
+  "keywords": [
+    "cloudflare",
+    "worker",
+    "proxy"
+  ],
+  "main": "dist/index.mjs",
+  "scripts": {
+    "build": "tsup"
+  }
+}
