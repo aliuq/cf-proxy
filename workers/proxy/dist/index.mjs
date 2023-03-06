@@ -165,8 +165,8 @@ var init = (options = {}) => {
   return async function(req, context) {
     context.url ||= new URL(req.url);
     context.defer(async (res) => {
-      res.headers.set("X-hash", context.bindings.GIT_HASH);
-      res.headers.set("X-version", context.bindings.VERSION);
+      context.bindings.GIT_HASH && res.headers.set("X-hash", context.bindings.GIT_HASH);
+      context.bindings.VERSION && res.headers.set("X-version", context.bindings.VERSION);
     });
     if (context.url.pathname === "/robots.txt") {
       context.robots = robotsOoverride ? robots : ["User-agent: *", "Disallow: /", ...robots];
@@ -318,20 +318,23 @@ API.prepare = n2(
   init(),
   create
 );
-API.add("GET", "/", (req, context) => {
-  const url = new URL(req.url);
-  return n(
-    200,
-    renderTemplate(home_default, {
-      url: url.origin,
-      version: context.bindings.VERSION
-    }),
-    { "content-type": "text/html;charset=utf-8" }
-  );
-});
-API.add("GET", "/*", async (req, context) => {
-  const newUrl = context.url.href.replace(context.url.origin, "").substring(1).replace(/^(https?:)\/+/g, "$1//");
-  return context.$proxy.run(newUrl, req);
+var methods = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
+methods.forEach((method) => {
+  API.add(method, "/", (req, context) => {
+    const url = new URL(req.url);
+    return n(
+      200,
+      renderTemplate(home_default, {
+        url: url.origin,
+        version: context.bindings.VERSION
+      }),
+      { "content-type": "text/html;charset=utf-8" }
+    );
+  });
+  API.add("GET", "/*", async (req, context) => {
+    const newUrl = context.url.href.replace(context.url.origin, "").substring(1).replace(/^(https?:)\/+/g, "$1//");
+    return context.$proxy.run(newUrl, req);
+  });
 });
 var src_default = i(API.run);
 export {
