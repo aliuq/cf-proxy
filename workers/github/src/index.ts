@@ -14,7 +14,12 @@ API.prepare = compose(
   Proxy.create,
 )
 
-API.add('GET', '*', (req, context) => {
+API.add('GET', '*', handler)
+API.add('POST', '*', handler)
+
+export default start(API.run)
+
+function handler(req: Request, context: Context) {
   const prefix = context.bindings.PREFIX ? `-${context.bindings.PREFIX}` : ''
   const domainMaps = {
     [`hub${prefix}.${context.domain}`]: 'github.com',
@@ -68,6 +73,4 @@ API.add('GET', '*', (req, context) => {
   }
 
   return reply(404, 'Not Found')
-})
-
-export default start(API.run)
+}
