@@ -8,6 +8,7 @@ export default defineConfig({
   minify: false,
   external: [],
   sourcemap: true,
+  keepNames: true,
   outExtension({ format }) {
     return {
       js: format === 'esm'
