@@ -1,3 +1,6 @@
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
 // ../../node_modules/.pnpm/regexparam@2.0.1/node_modules/regexparam/dist/index.mjs
 function parse(str, loose) {
   if (str instanceof RegExp)
@@ -25,6 +28,7 @@ function parse(str, loose) {
     pattern: new RegExp("^" + pattern + (loose ? "(?=$|/)" : "/?$"), "i")
   };
 }
+__name(parse, "parse");
 
 // ../../node_modules/.pnpm/worktop@0.8.0-next.14/node_modules/worktop/buffer/index.mjs
 var c = new TextEncoder();
@@ -34,6 +38,7 @@ var o = new TextDecoder("utf-8");
 function f(n3) {
   return n3 ? c.encode(n3).byteLength : 0;
 }
+__name(f, "f");
 
 // ../../node_modules/.pnpm/worktop@0.8.0-next.14/node_modules/worktop/response/index.mjs
 var t = "content-type";
@@ -46,6 +51,7 @@ function n(a4, n3, r3) {
   let d = o3[t], i2 = typeof n3;
   return null == n3 ? n3 = "" : "object" === i2 ? (n3 = JSON.stringify(n3), d = d || "application/json;charset=utf-8") : "string" !== i2 && (n3 = String(n3)), o3[t] = d || "text/plain", o3[s] = o3[s] || String(n3.byteLength || f(n3)), new Response(n3, { status: a4, headers: o3 });
 }
+__name(n, "n");
 var r2 = /* @__PURE__ */ new Set([101, 204, 205, 304]);
 function o2(e3, t2) {
   let a4 = r2.has(e3.status);
@@ -54,6 +60,7 @@ function o2(e3, t2) {
   let n3 = new Response(null, e3);
   return a4 && n3.headers.delete(s), 205 === e3.status && n3.headers.set(s, "0"), n3;
 }
+__name(o2, "o");
 
 // ../../node_modules/.pnpm/worktop@0.8.0-next.14/node_modules/worktop/router/index.mjs
 function n2(...e3) {
@@ -64,6 +71,7 @@ function n2(...e3) {
         return a4;
   };
 }
+__name(n2, "n");
 function a3() {
   let n3, a4, s2 = {};
   return n3 = { add(r3, t2, n4) {
@@ -123,11 +131,13 @@ function a3() {
     }
   } };
 }
+__name(a3, "a");
 
 // ../../node_modules/.pnpm/worktop@0.8.0-next.14/node_modules/worktop/cfw/index.mjs
 function i(t2) {
   return { fetch: (n3, i2, s2) => t2(n3, { bindings: i2, waitUntil: s2.waitUntil.bind(s2), passThroughOnException: s2.passThroughOnException.bind(s2) }) };
 }
+__name(i, "i");
 
 // src/util.ts
 function getDomainAndSubdomain(request) {
@@ -144,12 +154,14 @@ function getDomainAndSubdomain(request) {
   }
   return { domain, subdomain };
 }
+__name(getDomainAndSubdomain, "getDomainAndSubdomain");
 function maybePromise(value) {
   return value instanceof Promise ? value : Promise.resolve(value);
 }
+__name(maybePromise, "maybePromise");
 
 // src/middleware/index.ts
-var init = (options = {}) => {
+var init = /* @__PURE__ */ __name((options = {}) => {
   const {
     robots = [],
     robotsOoverride = false,
@@ -159,8 +171,8 @@ var init = (options = {}) => {
   return async function(req, context) {
     const url = new URL(req.url);
     context.defer(async (res) => {
-      res.headers.set("X-hash", context.bindings.GIT_HASH);
-      res.headers.set("X-version", context.bindings.VERSION);
+      context.bindings.GIT_HASH && res.headers.set("X-hash", context.bindings.GIT_HASH);
+      context.bindings.VERSION && res.headers.set("X-version", context.bindings.VERSION);
     });
     if (url.pathname === "/robots.txt") {
       context.robots = robotsOoverride ? robots : ["User-agent: *", "Disallow: /", ...robots];
@@ -174,10 +186,10 @@ var init = (options = {}) => {
     context.domain = domain;
     context.subdomain = subdomain;
   };
-};
+}, "init");
 
 // src/middleware/proxy.ts
-var create = (_req, context) => {
+var create = /* @__PURE__ */ __name((_req, context) => {
   context.$proxy = {
     genNewHeaders: (sourceHeaders, options = {}) => {
       const { headers = {}, override = false } = options;
@@ -257,7 +269,7 @@ var create = (_req, context) => {
       }
     }
   };
-};
+}, "create");
 
 // src/index.ts
 var API = new a3();
@@ -267,7 +279,10 @@ API.prepare = n2(
   }),
   create
 );
-API.add("GET", "*", (req, context) => {
+API.add("GET", "*", handler);
+API.add("POST", "*", handler);
+var src_default = i(API.run);
+function handler(req, context) {
   const prefix = context.bindings.PREFIX ? `-${context.bindings.PREFIX}` : "";
   const domainMaps = {
     [`hub${prefix}.${context.domain}`]: "github.com",
@@ -310,8 +325,8 @@ API.add("GET", "*", (req, context) => {
     });
   }
   return n(404, "Not Found");
-});
-var src_default = i(API.run);
+}
+__name(handler, "handler");
 export {
   src_default as default
 };
