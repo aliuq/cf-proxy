@@ -286,7 +286,7 @@ var home_default = `<!DOCTYPE html>
           action="{{url}}"
           method="get" target="_blank"
           style="display: flex; align-items: center;"
-          onsubmit="window.open('{{url}}/' + this.elements.url.value, '_blank'); return false;"
+          onsubmit="window.open('{{url}}/' + encodeURI(this.elements.url.value), '_blank'); return false;"
         >
           <input
             type="url"
@@ -320,20 +320,34 @@ API.prepare = n2(
 );
 var methods = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
 methods.forEach((method) => {
-  API.add(method, "/", (req, context) => {
-    const url = new URL(req.url);
-    return n(
-      200,
-      renderTemplate(home_default, {
-        url: url.origin,
-        version: context.bindings.VERSION
-      }),
-      { "content-type": "text/html;charset=utf-8" }
-    );
+  API.add(method, "/", async (req, context) => {
+    if (context.url?.searchParams && context.url?.searchParams?.has("url")) {
+      const search = Object.fromEntries(context.url.searchParams.entries());
+      const { url, ...rest } = search;
+      const newUrl = decodeURI(url);
+      if (Object.keys(rest || {}).length) {
+        Object.entries(rest).forEach(([key, value]) => {
+          rest[key] = decodeURI(value);
+        });
+      }
+      return context.$proxy.run(newUrl, req, {
+        headers: rest || {}
+      });
+    } else {
+      const url = new URL(req.url);
+      return n(
+        200,
+        renderTemplate(home_default, {
+          url: url.origin,
+          version: context.bindings.VERSION
+        }),
+        { "content-type": "text/html;charset=utf-8" }
+      );
+    }
   });
   API.add(method, "/*", async (req, context) => {
     const newUrl = context.url.href.replace(context.url.origin, "").substring(1).replace(/^(https?:)\/+/g, "$1//");
-    return context.$proxy.run(newUrl, req);
+    return context.$proxy.run(decodeURI(newUrl), req);
   });
 });
 var src_default = i(API.run);
