@@ -286,7 +286,7 @@ var home_default = `<!DOCTYPE html>
           action="{{url}}"
           method="get" target="_blank"
           style="display: flex; align-items: center;"
-          onsubmit="window.open('{{url}}/' + encodeURI(this.elements.url.value), '_blank'); return false;"
+          onsubmit="window.open('{{url}}/' + encodeURIComponent(this.elements.url.value), '_blank'); return false;"
         >
           <input
             type="url"
@@ -324,10 +324,10 @@ methods.forEach((method) => {
     if (context.url?.searchParams && context.url?.searchParams?.has("url")) {
       const search = Object.fromEntries(context.url.searchParams.entries());
       const { url, ...rest } = search;
-      const newUrl = decodeURI(url);
+      const newUrl = decodeURIComponent(url);
       if (Object.keys(rest || {}).length) {
         Object.entries(rest).forEach(([key, value]) => {
-          rest[key] = decodeURI(value);
+          rest[key] = decodeURIComponent(value);
         });
       }
       return context.$proxy.run(newUrl, req, {
@@ -347,7 +347,7 @@ methods.forEach((method) => {
   });
   API.add(method, "/*", async (req, context) => {
     const newUrl = context.url.href.replace(context.url.origin, "").substring(1).replace(/^(https?:)\/+/g, "$1//");
-    return context.$proxy.run(decodeURI(newUrl), req);
+    return context.$proxy.run(decodeURIComponent(newUrl), req);
   });
 });
 var src_default = i(API.run);
