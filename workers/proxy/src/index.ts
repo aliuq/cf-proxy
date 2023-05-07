@@ -19,15 +19,30 @@ API.prepare = compose(
 const methods: Method[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']
 
 methods.forEach((method: Method) => {
-  API.add(method, '/', (req, context) => {
-    const url = new URL(req.url)
-    return reply(200,
-      renderTemplate(HomeHtml, {
-        url: url.origin,
-        version: context.bindings.VERSION,
-      }),
-      { 'content-type': 'text/html;charset=utf-8' },
-    )
+  API.add(method, '/', async (req, context) => {
+    if (context.url?.searchParams && context.url?.searchParams?.has('url')) {
+      const search = Object.fromEntries(context.url.searchParams.entries())
+      const { url, ...rest } = search
+      const newUrl = decodeURIComponent(url)
+      if (Object.keys(rest || {}).length) {
+        Object.entries(rest).forEach(([key, value]) => {
+          rest[key] = decodeURIComponent(value)
+        })
+      }
+      return context.$proxy.run(newUrl, req, {
+        headers: rest || {},
+      })
+    }
+    else {
+      const url = new URL(req.url)
+      return reply(200,
+        renderTemplate(HomeHtml, {
+          url: url.origin,
+          version: context.bindings.VERSION,
+        }),
+        { 'content-type': 'text/html;charset=utf-8' },
+      )
+    }
   })
 
   API.add(method, '/*', async (req, context) => {
@@ -36,7 +51,7 @@ methods.forEach((method: Method) => {
       .substring(1)
       .replace(/^(https?:)\/+/g, '$1//')
 
-    return context.$proxy.run(newUrl, req)
+    return context.$proxy.run(decodeURIComponent(newUrl), req)
   })
 })
 

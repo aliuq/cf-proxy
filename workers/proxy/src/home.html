@@ -18,7 +18,7 @@
           action="{{url}}"
           method="get" target="_blank"
           style="display: flex; align-items: center;"
-          onsubmit="window.open('{{url}}/' + this.elements.url.value, '_blank'); return false;"
+          onsubmit="window.open('{{url}}/' + encodeURIComponent(this.elements.url.value), '_blank'); return false;"
         >
           <input
             type="url"
