@@ -86,7 +86,7 @@ async function needCancelRequest(request: Request, matches: string[] = []): Prom
 function getNewRequest(url: URL, request: Request) {
   const headers = new Headers(request.headers)
   headers.set('reason', 'mirror of China')
-  const newRequestInit: RequestInit = { redirect: 'manual', headers }
+  const newRequestInit: RequestInit = { redirect: 'follow', headers }
   return new Request(url.toString(), new Request(request, newRequestInit))
 }
 
